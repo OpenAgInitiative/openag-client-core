@@ -29,6 +29,7 @@ setup(
     ],
     packages=find_packages(),
     namespace_packages=['openag', 'openag.brain', 'openag.brain.modules'],
+    include_package_data=True,
     install_requires=[
         'couchdb>=1.0.1',
         'flask>=0.10.1',

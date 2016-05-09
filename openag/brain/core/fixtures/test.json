@@ -1,0 +1,24 @@
+{
+    "module": [
+        {
+            "_id": "echoer",
+            "parameters": {
+                "msg": "test"
+            },
+            "type": "openag.brain.modules.echo:Echo"
+        },
+        {
+            "_id": "printer",
+            "type": "openag.brain.modules.print:Print"
+        }
+    ],
+    "module_connection": [
+        {
+            "_id": "echoer_to_printer",
+            "output_module": "echoer",
+            "output_name": "out_data",
+            "input_module": "printer",
+            "input_name": "in_data"
+        }
+    ]
+}

@@ -8,10 +8,9 @@ from couchdb.mapping import (
 )
 
 class ModuleTypeModel(Document):
+    _id = TextField()
     name = TextField()
     description = TextField()
-    package_path = TextField()
-    class_name = TextField()
     parameters = DictField()
     inputs = DictField()
     outputs = DictField()

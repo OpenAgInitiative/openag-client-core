@@ -1,8 +1,11 @@
 import os
+import json
+import shutil
 import inspect
+import argparse
 from importlib import import_module
 from .db_names import DbName
-from . import _design
+from . import _design, fixtures
 from .. import modules
 from .base import ModuleMeta, Module
 from .register_module_type import register_module_type
@@ -21,7 +24,15 @@ def folder_to_dict(path):
     return res
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Initialize the database")
+    parser.add_argument('--fixture', required=False)
+    args = parser.parse_args()
+
     server = Server()
+
+    # Copy the couchdb config file into the correct directory
+    config_file_path = os.path.join(os.path.dirname(__file__), "couchdb.ini")
+    shutil.copy(config_file_path, "/etc/couchdb/default.d/openag.ini")
 
     # Create all of the databases
     for db_name in DbName:
@@ -57,3 +68,22 @@ if __name__ == '__main__':
         for name, cls in inspect.getmembers(py_mod, inspect.isclass):
             if issubclass(cls, Module) and cls != Module:
                 register_module_type(cls, server[DbName.MODULE_TYPE.value])
+
+    # Create modules based on the fixture passed in from the command line
+    if args.fixture:
+        fixture_file_name = os.path.join(
+            os.path.dirname(fixtures.__file__), args.fixture + ".json"
+        )
+        with open(fixture_file_name) as fixture_file:
+            fixture = json.load(fixture_file)
+        for db_name, items in fixture.items():
+            db = server[db_name]
+            for item in items:
+                item_id = item["_id"]
+                if item_id in db:
+                    doc = db[item_id]
+                else:
+                    doc = {}
+                if any(doc.get(k, None) != v for k,v in item.items()):
+                    doc.update(item)
+                    db.save(doc)

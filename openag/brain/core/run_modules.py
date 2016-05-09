@@ -21,8 +21,9 @@ if __name__ == '__main__':
     for mod_id in module_db:
         mod_info = ModuleModel.load(module_db, mod_id)
         mod_type_info = ModuleTypeModel.load(module_type_db, mod_info.type)
-        py_mod = import_module(mod_type_info.package_path)
-        mod_class = getattr(py_mod, mod_type_info.class_name)
+        package_path, class_name = mod_type_info._id.split(':')
+        py_mod = import_module(package_path)
+        mod_class = getattr(py_mod, class_name)
         mod = mod_class(mod_id)
 
     # Initialize all of the modules

@@ -13,20 +13,11 @@ def register_module_type(cls, db):
     doc = {}
 
     # Check if the document already exists
-    view = db.view("openag/by_class_path", key=cls_path)
-    if len(view):
-        # If so, load the old document
-        doc_id = view.rows[0].value
-        doc = db[doc_id]
+    if cls_path in db:
+        doc = db[cls_path]
     else:
-        # Otherwise, we will create the document; generate a unique id for it
-        doc_id = uuid4().hex
-        while doc_id in db:
-            doc_id = uuid4().hex
-        doc['_id'] = doc_id
+        doc = {"_id": cls_path}
     new_info = cls._info._asdict()
-    new_info['package_path'] = package_path
-    new_info['class_name'] = cls_name
 
     # Only apply the update if changes have actually been made to the class
     if any(doc.get(k, None) != v for k,v in new_info.items()):

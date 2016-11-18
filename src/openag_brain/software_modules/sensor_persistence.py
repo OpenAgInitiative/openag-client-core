@@ -28,6 +28,24 @@ from openag.var_types import EnvVar
 from openag_brain import params
 from roslib.message import get_message_class
 
+def should_update_point(
+    last_value, value
+    delta_time, min_update_interval, max_update_interval
+    ):
+    if delta_time < min_update_interval:
+        return False
+    if delta_time < max_update_interval:
+        delta_val = value - last_value
+        if abs(delta_val / last_value) <= 0.01:
+            return False
+    return True
+
+def read_index_key(environment, variable, is_desired):
+    """Given a point, returns a key suitable for indexing that point"""
+    point_type = "desired" if is_desired else "measured"
+    key = "{}_{}_{}".format(environment, point_type, variable)
+    return key
+
 class TopicPersistence:
     def __init__(
         self, db, topic, topic_type, environment, variable, is_desired,
@@ -37,8 +55,7 @@ class TopicPersistence:
         self.environment = environment
         self.variable = variable
         self.is_desired = is_desired
-        self.last_value = None
-        self.last_time = 0
+        self.last_points = {}
         self.sub = rospy.Subscriber(topic, topic_type, self.on_data)
         self.max_update_interval = max_update_interval
         self.min_update_interval = min_update_interval
@@ -51,14 +68,17 @@ class TopicPersistence:
         if item._slot_types[item.__slots__.index('data')] == "uint8[]":
             value = [ord(x) for x in value]
 
+        # Find previous datapoint (if any)
+        key = read_index_key(self.environment, self.variable, self.is_desired)
+        last_point = self.last_points.get(key)
+
         # Throttle updates
         delta_time = curr_time - self.last_time
-        if delta_time < self.min_update_interval:
+        if last_point and not should_update_point(
+            last_point.value, value,
+            delta_time, self.min_update_interval, self.max_update_interval
+        ):
             return
-        if delta_time < self.max_update_interval and self.last_value:
-            delta_val = value - self.last_value
-            if abs(delta_val / self.last_value) <= 0.01:
-                return
 
         # Save the data point
         point = EnvironmentalDataPoint({
@@ -71,8 +91,8 @@ class TopicPersistence:
         point_id = self.gen_doc_id(curr_time)
         self.db[point_id] = point
 
-        self.last_value = value
-        self.last_time = curr_time
+        # Store point in index so we can compare against it later
+        self.last_points[key] = point
 
     def gen_doc_id(self, curr_time):
         return "{}-{}".format(curr_time, random.randint(0, sys.maxsize))

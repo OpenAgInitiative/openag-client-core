@@ -92,7 +92,13 @@ def update_launch(server):
 
     for module_id, module in modules.items():
         print 'Processing module "{}" from server'.format(module_id)
-        mod_ns = module.get("namespace", module.get("environment", None))
+        ns = module.get("namespace")
+        environment = module.get("environment")
+        mod_ns = (
+            ns if ns else
+            "environments/{}".format(environment) if environment else
+            None
+        )
         if not mod_ns in groups:
             group = create_group(root, mod_ns)
             groups[mod_ns] = group

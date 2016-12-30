@@ -9,23 +9,12 @@ in the system.
 import sys
 import time
 import random
-from importlib import import_module
+from re import match
 
 import rospy
 import rostopic
-from couchdb import Server
+import rosgraph
 
-from openag.cli.config import config as cli_config
-from openag.utils import synthesize_firmware_module_info
-from openag.models import (
-    FirmwareModule, FirmwareModuleType, EnvironmentalDataPoint
-)
-from openag.db_names import (
-    FIRMWARE_MODULE, FIRMWARE_MODULE_TYPE, ENVIRONMENTAL_DATA_POINT
-)
-from openag.var_types import EnvVar
-
-from openag_brain import params
 from roslib.message import get_message_class
 
 class TopicPersistence:
@@ -77,47 +66,37 @@ class TopicPersistence:
     def gen_doc_id(self, curr_time):
         return "{}-{}".format(curr_time, random.randint(0, sys.maxsize))
 
+def gen_parsed_filtered(pubs):
+    """
+    Generate a description tuple for topics that measured endpoints.
+    Matches, filters and parses topic names to find measured information.
+    """
+    for topic, topic_type in pubs:
+        result = match("/environments/(\w+)/filtered/(\w+)", topic)
+        if result:
+            environment_id = result.groups(1)
+            variable = result.groups(2)
+            yield (topic, topic_type, environment_id, variable)
+
 def create_persistence_objects(
-    server, max_update_interval, min_update_interval
+    pubs, max_update_interval, min_update_interval
 ):
-    env_var_db = server[ENVIRONMENTAL_DATA_POINT]
-    module_db = server[FIRMWARE_MODULE]
-    module_type_db = server[FIRMWARE_MODULE_TYPE]
-    modules = {
-        module_id: FirmwareModule(module_db[module_id]) for module_id in
-        module_db if not module_id.startswith('_')
-    }
-    module_types = {
-        type_id: FirmwareModuleType(module_type_db[type_id]) for type_id in
-        module_type_db if not type_id.startswith("_")
-    }
-    modules = synthesize_firmware_module_info(modules, module_types)
-    valid_vars = list(EnvVar.items.keys())
-    for module_id, module_info in modules.items():
-        for output_name, output_info in module_info["outputs"].items():
-            if not output_info["variable"] in valid_vars:
-                rospy.logwarn(
-                    "Encountered a module output that references a "
-                    'non-existant variable: Output "%s" of module "%s"',
-                    output_name, module_id
-                )
-                continue
-            topic = "/sensors/{}/{}/filtered".format(module_id, output_name)
-            topic_type = get_message_class(output_info["type"])
-            TopicPersistence(
-                topic=topic, topic_type=topic_type,
-                environment=module_info["environment"],
-                variable=output_info["variable"], is_desired=False,
-                db=env_var_db, max_update_interval=max_update_interval,
-                min_update_interval=min_update_interval
-            )
+    for topic, topic_type, environment_id, variable in gen_parsed_filtered(pubs):
+        TopicType = get_message_class(topic_type)
+        TopicPersistence(
+            topic=topic, topic_type=TopicType,
+            environment=environment_id,
+            variable=variable, is_desired=False,
+            db=env_var_db, max_update_interval=max_update_interval,
+            min_update_interval=min_update_interval
+        )
 
 if __name__ == '__main__':
-    db_server = cli_config["local_server"]["url"]
-    if not db_server:
-        raise RuntimeError("No local database specified")
-    server = Server(db_server)
     rospy.init_node('sensor_persistence')
+
+    rostopic_master = rosgraph.Master("/rostopic")
+    pubs, subs, _ = rostopic_master.getSystemState()
+
     try:
         max_update_interval = rospy.get_param("~max_update_interval")
     except KeyError:
@@ -135,7 +114,8 @@ if __name__ == '__main__':
         )
         min_update_interval = 5
     create_persistence_objects(
-        server, max_update_interval=max_update_interval,
+        pubs,
+        max_update_interval=max_update_interval,
         min_update_interval=min_update_interval
     )
     rospy.spin()

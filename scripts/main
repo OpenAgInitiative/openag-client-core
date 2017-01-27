@@ -80,6 +80,12 @@ def main(api_server, db_server, fixtures, screen, categories):
         ):
             raise RuntimeError("Failed to load fixture " + fixture_path)
 
+    # Update any firmwae_module_types loaded by the fixtures
+    if subprocess.call(
+        ["openag", "db", "update_module_types"]
+    ):
+        raise RuntimeError("Failed to update module types")
+
     # Start the software modules
     print "Generating launch file"
     commands.update_launch(server, categories=categories)

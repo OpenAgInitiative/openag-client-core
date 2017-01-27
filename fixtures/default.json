@@ -11,24 +11,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_am2315.git"
-      },
-      "header_file": "openag_am2315.h",
-      "class_name": "Am2315",
-      "description": "Driver for the am2315 sensor",
-      "outputs": {
-        "air_temperature": {
-          "type": "std_msgs/Float32"
-        },
-        "air_humidity": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "Sensor responded with the wrong function code",
-        "2": "Sensor did not return enough information"
       }
     },
     {
@@ -36,39 +18,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_atlas_do.git"
-      },
-      "description": "",
-      "header_file": "openag_atlas_do.h",
-      "class_name": "AtlasDo",
-      "arguments": [
-        {
-          "name": "i2c_address",
-          "type": "int",
-          "default": 97
-        }
-      ],
-      "inputs": {
-        "atmospheric_calibration": {
-          "type": "std_msgs/Empty",
-          "categories": ["calibration"]
-        },
-        "zero_calibration": {
-          "type": "std_msgs/Empty",
-          "categories": ["calibration"]
-        }
-      },
-      "outputs": {
-        "water_dissolved_oxygen": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "No response",
-        "2": "Request failed",
-        "3": "Unknown error"
       }
     },
     {
@@ -76,30 +25,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_atlas_ec.git"
-      },
-      "description": "",
-      "header_file": "openag_atlas_ec.h",
-      "class_name": "AtlasEc",
-      "description": "Driver for the Atlas Scientific electrical conductivity sensor",
-      "arguments": [
-        {
-          "name": "i2c_address",
-          "type": "int",
-          "default": 100
-        }
-      ],
-      "outputs": {
-        "water_electrical_conductivity": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "No response",
-        "2": "Request failed",
-        "3": "Unknown error"
       }
     },
     {
@@ -107,39 +32,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_atlas_orp.git"
-      },
-      "header_file": "openag_atlas_orp.h",
-      "class_name": "AtlasOrp",
-      "description": "",
-      "repository": {
-        "type": "git",
-        "url": "https://github.com/OpenAgInitiative/openag_atlas_orp.git"
-      },
-      "arguments": [
-        {
-          "name": "i2c_address",
-          "type": "int",
-          "default": 98
-        }
-      ],
-      "inputs": {
-        "calibration": {
-          "type": "std_msgs/Float32",
-          "categories": ["calibration"]
-        }
-      },
-      "outputs": {
-        "water_oxidation_reduction_potential": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "No data",
-        "2": "Request failed",
-        "3": "Unknown error"
       }
     },
     {
@@ -147,30 +39,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_atlas_ph.git"
-      },
-      "header_file": "openag_atlas_ph.h",
-      "class_name": "AtlasPh",
-      "description": "Driver for the Atlas Scientific pH sensor",
-      "arguments": [
-        {
-          "name": "i2c_address",
-          "type": "int",
-          "default": 99
-        }
-      ],
-      "inputs": {},
-      "outputs": {
-        "water_potential_hydrogen": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "No response",
-        "2": "Request failed",
-        "3": "Unknown error"
       }
     },
     {
@@ -178,32 +46,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_atlas_rgb.git"
-      },
-      "header_file": "openag_atlas_rgb.h",
-      "class_name": "AtlasRgb",
-      "description": "Driver for the Atlas Scientific light spectrum and intensity sensor",
-      "arguments": [
-        {
-          "name": "serial_port",
-          "type": "int",
-          "description": "Index of the serial port to which this sensor is connected"
-        }
-      ],
-      "outputs": {
-        "light_illuminance": {
-          "type": "std_msgs/UInt16"
-        },
-        "light_spectrum": {
-          "type": "std_msgs/UInt8MultiArray",
-          "description": "3-element array with red, green, and blue values"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "Failed to read data",
-        "2": "Invalid response. Recalibration required"
       }
     },
     {
@@ -211,120 +53,27 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_binary_actuator.git"
-      },
-      "header_file": "openag_binary_actuator.h",
-      "class_name": "BinaryActuator",
-      "description": "Driver for an actuator that can only be set ot binary values",
-      "arguments": [
-        {
-          "name": "pin",
-          "type": "int"
-        },
-        {
-          "name": "is_active_low",
-          "type": "bool",
-          "default": false
-        }
-      ],
-      "inputs": {
-        "cmd": {
-          "type": "std_msgs/Bool",
-          "categories": ["actuators"]
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ]
+      }
     },
     {
       "_id": "dht22",
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_dht22.git"
-      },
-      "header_file": "openag_dht22.h",
-      "class_name": "Dht22",
-      "description": "",
-      "repository": {
-        "type": "git",
-        "url": "https://github.com/OpenAgInitiative/openag_dht22.git"
-      },
-      "arguments": [
-        {
-          "name": "pin",
-          "type": "int"
-        }
-      ],
-      "outputs": {
-        "air_temperature": {
-          "type": "std_msgs/Float32"
-        },
-        "air_humidity": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "Failed to read from sensor"
       }
     },
     {
       "_id": "ds18b20",
-      "header_file": "openag_ds18b20.h",
-      "class_name": "Ds18b20",
-      "description": "",
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_ds18b20.git"
-      },
-      "arguments": [
-        {
-          "name": "pin",
-          "type": "int"
-        }
-      ],
-      "outputs": {
-        "temperature": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"},
-        {"type": "pio", "id": 54}
-      ],
-      "status_codes": {
-        "1": "Unable to find address for sensor",
-        "2": "Sensor isn't responding to queries"
       }
     },
     {
       "_id": "gc0012",
-      "header_file": "openag_gc0012.h",
-      "class_name": "Gc0012",
-      "description": "",
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_gc0012.git"
-      },
-      "arguments": [
-        {
-          "name": "serial_port",
-          "type": "int",
-          "default": 1
-        }
-      ],
-      "outputs": {
-        "air_carbon_dioxide": {
-          "type": "std_msgs/Float32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "2": "Failed to read from sensor"
       }
     },
     {
@@ -332,30 +81,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_mhz16.git"
-      },
-      "header_file": "openag_mhz16.h",
-      "class_name": "MHZ16",
-      "description": "",
-      "arguments": [
-        {
-          "name": "i2c_address",
-          "type": "int",
-          "default": 77
-        }
-      ],
-      "outputs": {
-        "air_carbon_dioxide": {
-          "type": "std_msgs/Int32"
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "Initializing",
-        "2": "Sensor powered off to prevent autocalibration",
-        "3": "Failed to initialize sensor",
-        "4": "Failed to read from sensor"
       }
     },
     {
@@ -363,38 +88,6 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_pwm_actuator.git"
-      },
-      "header_file": "openag_pwm_actuator.h",
-      "class_name": "PwmActuator",
-      "description": "Driver for an actuator that can take any value between 0 and 1",
-      "arguments": [
-        {
-          "name": "pin",
-          "type": "int"
-        },
-        {
-          "name": "is_active_low",
-          "type": "bool",
-          "default": false
-        },
-        {
-          "name": "threshold",
-          "type": "float",
-          "default": 0,
-          "description": "Command threshold at which the actuator turns on"
-        }
-      ],
-      "inputs": {
-        "cmd": {
-          "type": "std_msgs/Float32",
-          "categories": ["actuators"]
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ],
-      "status_codes": {
-        "1": "Invalid command received"
       }
     },
     {
@@ -402,35 +95,7 @@
       "repository": {
         "type": "git",
         "url": "https://github.com/OpenAgInitiative/openag_software_pwm_actuator.git"
-      },
-      "header_file": "openag_software_pwm_actuator.h",
-      "class_name": "SoftwarePwmActuator",
-      "description": "OpenAg driver for an actuator. Does pwm in software to allow for more flexibility in configuration: particularly to allow for longer periods for actuators that exhibit a nonlinear response to normal pwm.",
-      "arguments": [
-        {
-          "name": "pin",
-          "type": "int"
-        },
-        {
-          "name": "is_active_low",
-          "type": "bool",
-          "default": false
-        },
-        {
-          "name": "period",
-          "type": "int",
-          "default": 1000
-        }
-      ],
-      "inputs": {
-        "cmd": {
-          "type": "std_msgs/Float32",
-          "categories": ["actuators"]
-        }
-      },
-      "dependencies": [
-        {"type": "git", "url": "https://github.com/OpenAgInitiative/openag_firmware_module.git"}
-      ]
+      }
     }
   ],
   "software_module_type": [

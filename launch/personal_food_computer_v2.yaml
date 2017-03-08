@@ -132,6 +132,20 @@ firmware_module:
     cmd:
       variable: air_temperature
       multiplier: -1
+# This configuration sets up a second chiller pin that does not
+# rely on pulse modulation HW. Instead, it uses the tone_actuator firmware
+# to modulate in software.
+# @FIXME eventually we should have only one chiller compressor in firmware.
+- _id: chiller_compressor_1_1
+  arguments:
+  - 9
+  - false
+  environment: environment_1
+  type: tone_actuator
+  inputs:
+    cmd:
+      variable: air_temperature
+      multiplier: -1
 - _id: chamber_fan_1
   arguments:
   - 39
@@ -348,6 +362,30 @@ firmware_module_type:
   dependencies:
   - type: git
     url: https://github.com/OpenAgInitiative/openag_firmware_module.git
+- _id: tone_actuator
+  header_file: openag_tone_actuator.h
+  class_name: ToneActuator
+  arguments:
+  - name: pin
+    type: int
+  - name: is_active_low
+    type: bool
+    default: false
+  - name: tone_frequency
+    type: int
+    default: 140
+  - name: tone_duration
+    type: int
+    default: -1
+  inputs:
+    cmd:
+      type: std_msgs/Bool
+  repository:
+    url: https://github.com/OpenAgInitiative/openag_tone_actuator.git
+    type: git
+  dependencies:
+  - type: git
+    url: http://github.com/OpenAgInitiative/openag_firmware_module.git
 - _id: pulse_actuator
   description: Driver for binary actuators with very granular timescales
   repository:

@@ -19,4 +19,4 @@ parameter files in this repository. First, install `openag_python` (>0.1.5):
 
 Then:
 
-    openag firmware flash -f openag_launch/personal_food_computer_v2.yaml
+    openag firmware flash -p ros -t upload -f openag_launch/personal_food_computer_v2.yaml

@@ -32,7 +32,13 @@ See ``launch/personal_food_computer_v2.yaml`` for an example of a firmware confi
 Building Firmware
 -----------------
 
-Firmware can be built with the `scripts/firmware` utility.
+The `install_dev` script installs [platformio](http://docs.platformio.org/en/latest/ide/atom.html), a tool for building Arduino binaries. However, before you can use the firmware build system, you need to initialize platformio **just once** from the directory you plan run the flash script in.
+
+    rosrun openag_brain init_pio
+
+This will create config files and a build space for platformio.
+
+Now, firmware can be built with the `scripts/firmware` utility.
 
 Get info on how to use it::
 

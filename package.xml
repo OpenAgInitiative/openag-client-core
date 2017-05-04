@@ -52,6 +52,7 @@
   <run_depend>python-requests</run_depend>
   <run_depend>python-gevent</run_depend>
   <run_depend>python-flask</run_depend>
+  <run_depend>python-periphery-pip</run_depend>
 
   <test_depend>rostest</test_depend>
   <!-- The export tag contains other, unspecified, tags -->

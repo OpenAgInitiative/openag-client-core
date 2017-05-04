@@ -2,6 +2,8 @@
   <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_v2.yaml" />
   <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_var_types.yaml" ns="var_types"/>
   <group ns="environments/environment_1">
+    <node pkg="openag_brain" type="sensor_am2315.py" name="am2315_1">
+    </node>
     <node pkg="openag_brain" type="linear_controller.py" name="water_level_high_controller_1">
       <param name="variable" value="water_level_high" type="str"/>
     </node>
@@ -60,11 +62,5 @@
       <param name="pixel_format" type="str" value="yuyv"/>
     </node>
   </group>
-  <node pkg="openag_brain" type="expand_diagnostics.py" name="expand_diagnostics"/>
-  <node pkg="openag_brain" type="handle_arduino.py" name="arduino_handler">
-    <param name="serial_port" value="/dev/ttyACM0" type="str"/>
-  </node>
   <node pkg="openag_brain" type="api.py" name="api"/>
-  <node pkg="openag_brain" type="topic_connector.py" name="topic_connector" />
-  <node pkg="openag_brain" type="sensor_info_publisher.py" name="sensor_info_publisher"/>
 </launch>

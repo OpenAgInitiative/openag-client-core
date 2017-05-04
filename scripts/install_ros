@@ -1,0 +1,41 @@
+#!/bin/bash
+# This script installs ROS from source
+# in a catkin workspace.
+
+# Add ROS apt source
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu jessie main" > /etc/apt/sources.list.d/ros-latest.list'
+wget https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -O - | sudo apt-key add -
+
+# Update apt
+sudo apt-get update
+sudo apt-get -y upgrade
+
+# Install bootstrapping dependencies
+sudo apt-get install -y python-pip
+sudo pip install rosdep rosinstall_generator wstool
+
+# Initialize rosdep.
+# This has to happen just once, so we make it
+# idempotent by removing the old list if it exists.
+if [ -f /etc/ros/rosdep/sources.list.d/20-default.list ];
+  then sudo rm /etc/ros/rosdep/sources.list.d/20-default.list
+fi
+sudo rosdep init
+rosdep update
+
+# Make catkin workspace
+mkdir ~/ros_catkin_ws
+cd ~/ros_catkin_ws
+
+# Create a rosinstall file for ros indigo core
+rosinstall_generator ros_comm --rosdistro indigo --deps --wet-only --exclude roslisp --tar > indigo_ros_comm_wet.rosinstall
+
+# Use .rosinstall file to fetch ros source
+wstool init src indigo_ros_comm_wet.rosinstall
+
+# Install dist ros dependencies
+rosdep install --from-paths src --ignore-src --rosdistro indigo -y -r --os=debian:jessie
+
+# Source ROS environment
+source /opt/ros/indigo/setup.bash
+echo "source /opt/ros/indigo/setup.bash" >> ~/.bashrc

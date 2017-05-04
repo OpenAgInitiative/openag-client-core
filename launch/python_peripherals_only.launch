@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="openag_brain" type="sensor_am2315.py" name="am2315_1" />
+</launch>

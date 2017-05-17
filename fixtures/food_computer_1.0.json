@@ -1,0 +1,34 @@
+{
+  "firmware_module": [
+    {
+      "_id": "ds18b20_1",
+      "type": "ds18b20",
+      "environment": "environment_1",
+      "arguments": [4],
+      "outputs": {
+        "temperature": {"variable": "water_temperature"}
+      }
+    },
+    {
+      "_id": "gc0012_1",
+      "type": "gc0012",
+      "environment": "environment_1",
+      "arguments": [1],
+      "outputs": {
+        "air_carbon_dioxide": {"variable": "air_carbon_dioxide"}
+      }
+    },
+    {
+      "_id": "dht22_1",
+      "type": "dht22",
+      "environment": "environment_1",
+      "arguments": [5],
+      "outputs": {
+        "air_temperature": {"variable": "air_temperature"},
+        "air_humidity": {"variable": "air_humidity"}
+      }
+    }
+  ],
+  "software_module": [
+  ]
+}

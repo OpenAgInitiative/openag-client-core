@@ -52,15 +52,21 @@ environment_variables:
     description: "A measure of the amount of oxygen in the water"
     units: "mg/L"
     type: "std_msgs/Float64"
+  water_level_low:
+      name: water_level_low
+      description: "Is water below threshold?"
+      type: "std_msgs/Bool"
   water_level_high:
     name: water_level_high
     description: "Is water above threshold?"
     type: "std_msgs/Bool"
   nutrient_flora_duo_a:
+    units: "ml/h"
     name: nutrient_flora_duo_a
     description: "FloraDuo nutrient A"
     type: "std_msgs/Float64"
   nutrient_flora_duo_b:
+    units: "ml/h"
     name: nutrient_flora_duo_b
     description: "FloraDuo nutrient B"
     type: "std_msgs/Float64"

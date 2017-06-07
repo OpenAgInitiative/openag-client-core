@@ -14,16 +14,17 @@ AtlasEc::AtlasEc(int i2c_address) {
   _i2c_address = i2c_address;
 }
 
-void AtlasEc::begin() {
+uint8_t AtlasEc::begin() {
   Wire.begin();
   // Enable only the EC reading
   Wire.print("O,EC,1");
   Wire.print("O,TDS,0");
   Wire.print("O,S,0");
   Wire.print("O,SG,0");
+  return status_level;
 }
 
-void AtlasEc::update() {
+uint8_t AtlasEc::update() {
   if (_waiting_for_response) {
     if (millis() - _time_of_last_query > 1400) {
       read_response();
@@ -32,40 +33,38 @@ void AtlasEc::update() {
   else if (millis() - _time_of_last_query > _min_update_interval) {
     send_query();
   }
+  return status_level;
 }
 
-bool AtlasEc::get_water_electrical_conductivity(std_msgs::Float32 &msg) {
-  msg.data = _water_electrical_conductivity;
-  bool res = _send_water_electrical_conductivity;
-  _send_water_electrical_conductivity = false;
-  return res;
+float AtlasEc::get_water_electrical_conductivity() {
+  return _water_electrical_conductivity;
 }
 
-void AtlasEc::set_dry_calibration(std_msgs::Empty msg) {
+void AtlasEc::set_dry_calibration() {
   Wire.beginTransmission(_i2c_address);
   Wire.print("Cal,dry");
   Wire.endTransmission();
 }
 
-void AtlasEc::set_single_calibration(std_msgs::Float32 msg) {
+void AtlasEc::set_single_calibration(double msg) {
   char buf[17];
-  sprintf(buf, "Cal,one,%.2f", msg.data);
+  sprintf(buf, "Cal,one,%.2f", msg);
   Wire.beginTransmission(_i2c_address);
   Wire.print(buf);
   Wire.endTransmission();
 }
 
-void AtlasEc::set_lowpoint_calibration(std_msgs::Float32 msg) {
+void AtlasEc::set_lowpoint_calibration(double msg) {
   char buf[17];
-  sprintf(buf, "Cal,low,%.2f", msg.data);
+  sprintf(buf, "Cal,low,%.2f", msg);
   Wire.beginTransmission(_i2c_address);
   Wire.print(buf);
   Wire.endTransmission();
 }
 
-void AtlasEc::set_highpoint_calibration(std_msgs::Float32 msg) {
+void AtlasEc::set_highpoint_calibration(double msg) {
   char buf[17];
-  sprintf(buf, "Cal,high,%.2f", msg.data);
+  sprintf(buf, "Cal,high,%.2f", msg);
   Wire.beginTransmission(_i2c_address);
   Wire.print(buf);
   Wire.endTransmission();

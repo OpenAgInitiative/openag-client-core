@@ -9,7 +9,7 @@ MHZ16::MHZ16(int i2c_address) : _sensor(i2c_address) {
   _time_of_last_power_cycle = 0;
 }
 
-void MHZ16::begin() {
+uint8_t MHZ16::begin() {
   _sensor.power_on();
   _is_on = true;
   if (!_sensor.begin()) {
@@ -24,9 +24,11 @@ void MHZ16::begin() {
     _init_time = millis();
     _initializing = true;
   }
+  return status_level;
 }
 
-void MHZ16::update() {
+uint8_t MHZ16::update() {
+  _send_air_carbon_dioxide = false;
   uint32_t curr_time = millis();
   // Handle clock rollover
   if (_time_of_last_power_cycle > curr_time || _time_of_last_reading > curr_time) {
@@ -37,19 +39,23 @@ void MHZ16::update() {
     status_level = WARN;
     status_code = CODE_INTENTIONAL_POWER_OFF;
     status_msg = "Powered off to prevent autocalibration";
-    return;
+    return status_level;
   }
-  // Turn the sensor back of it it's been off for a while
+  // Turn the sensor back on if it's been off for a while
   if (!_is_on) {
     if (curr_time - _time_of_last_power_cycle > _leave_off_for) {
       begin();
+    }else{
+      status_level = WARN;
+      status_code = CODE_INTENTIONAL_POWER_OFF;
+      status_msg = "Powered off to prevent autocalibration";
+      return status_level;
     }
-    return;
   }
   // Wait 10 seconds for initialization
   if (_initializing) {
     if (curr_time - _init_time < 10000) {
-      return;
+      return status_level;
     }
     else {
       _initializing = false;
@@ -66,6 +72,7 @@ void MHZ16::update() {
     status_level = WARN;
     status_code = CODE_INTENTIONAL_POWER_OFF;
     status_msg = "Powered off to prevent autocalibration";
+    return status_level;
   }
   // Read from the sensor
   if (curr_time - _time_of_last_reading > _min_update_interval) {
@@ -87,11 +94,9 @@ void MHZ16::update() {
     }
     _time_of_last_reading = millis();
   }
+  return status_level;
 }
 
-bool MHZ16::get_air_carbon_dioxide(std_msgs::Int32 &msg) {
-  msg.data = _sensor.ppm;
-  bool res = _send_air_carbon_dioxide;
-  _send_air_carbon_dioxide = false;
-  return res;
+int MHZ16::get_air_carbon_dioxide() {
+  return _sensor.ppm;
 }

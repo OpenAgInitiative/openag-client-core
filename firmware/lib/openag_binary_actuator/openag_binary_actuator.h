@@ -2,7 +2,6 @@
 #define OPENAG_BINARY_ACTUATOR_H
 
 #include "Arduino.h"
-#include <std_msgs/Bool.h>
 #include <openag_module.h>
 
 class BinaryActuator : public Module {
@@ -11,9 +10,9 @@ class BinaryActuator : public Module {
     BinaryActuator(int pin, bool is_active_low, int shutoff_ms);
 
     // Public functions
-    void begin();
-    void update();
-    void set_cmd(std_msgs::Bool cmd);
+    uint8_t begin();
+    uint8_t update();
+    uint8_t set_cmd(bool cmd);
 
   private:
     // Private variables

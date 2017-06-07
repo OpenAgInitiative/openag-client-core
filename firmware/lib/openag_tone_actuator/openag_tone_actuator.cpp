@@ -11,22 +11,25 @@ ToneActuator::ToneActuator(int pin, bool is_active_low, int tone_frequency, int 
   status_msg = "";
 }
 
-void ToneActuator::begin() {
+uint8_t ToneActuator::begin() {
+  return status_level;
 }
 
-void ToneActuator::update() {
+uint8_t ToneActuator::update() {
   uint32_t curr_time = millis();
   if ((curr_time - _last_cmd) > _shutoff_ms) {
     noTone(_pin);
   }
+  return status_level;
 }
 
-void ToneActuator::set_cmd(std_msgs::Bool cmd) {
+uint8_t ToneActuator::set_cmd(bool cmd) {
   _last_cmd = millis();
-  if (cmd.data) {
+  if (cmd) {
     tone(_pin, _tone_frequency);
   }
   else {
     noTone(_pin);
   }
+  return status_level;
 }

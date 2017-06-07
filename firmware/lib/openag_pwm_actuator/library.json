@@ -10,7 +10,7 @@
     "platforms": "*",
     "dependencies": [
         {
-            "name": "rosserial_arduino"
+            "name": "openag_module"
         }
     ]
 }

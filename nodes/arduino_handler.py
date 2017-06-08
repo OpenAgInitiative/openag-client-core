@@ -7,6 +7,8 @@ It also receives env_var/commanded topics and sends messages to the Arduino acco
 Usage (in ROS launchfile):
 <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">
   <param name="serial_port_id" value="/dev/ttyACM0" type="str"/>
+  <param name="publisher_rate_hz" value="1" type="int"/>
+  <param name="baud_rate" value="115200" type="int"/>
 </node>
 """
 import serial
@@ -22,23 +24,22 @@ def expand_unknown_status(status_code):
     }
 
 def ros_next(rate_hz):
-    prev_time = rospy.get_time()
+    ros_next.prev_time = rospy.get_time()
     timeout = 1 / rate_hz
     def closure():
         curr_time = rospy.get_time()
-        if curr_time - prev_time > timeout:
-            prev_time = curr_time
-            return true
+        if curr_time - ros_next.prev_time > timeout:
+            ros_next.prev_time = curr_time
+            return True
         else:
-            return false
-
+            return False
     return closure
 
 # Read the serial message string, and publish to the correct topics
 def process_message(line):
     try:
         values = line.decode().split(',')
-        status_code = pairs["status"]
+        status_code = values[0]
         # Expand status code to status dict
         status = (
             STATUS_CODE_INDEX.get(status_code) or
@@ -62,7 +63,7 @@ def process_message(line):
         pairs = ((sensor_csv_headers[0], sensor_csv_headers[1](value))
             for value in variable_values)
 
-        return {"ok": pairs}
+        return pairs
 
     except IndexError:
         message = "Short read, received part of a message: {}".format(buf.decode())
@@ -89,7 +90,7 @@ def process_message(line):
 # for single actuators to listen in on */commanded topics and decide to actuate
 # based on the information individually instead of having to write a config.
 # 6/7/2017 Rikuo Hasegawa(Spaghet)
-def air_temperature_callback(msg):
+def air_temperature_callback(msg): # float -1~1
     command = msg.data
     up = (
         ("heater_core_2_1", bool),
@@ -118,7 +119,7 @@ def air_temperature_callback(msg):
             actuator_state[header] = type_constructor(True)
 
 
-def water_potential_hydrogen_callback(msg):
+def water_potential_hydrogen_callback(msg): # float -1 ~ 1
     command = msg.data
     up = ("pump_3_ph_up_1", bool)
     down = ("pump_4_ph_down_1", bool)
@@ -130,36 +131,38 @@ def water_potential_hydrogen_callback(msg):
     # Set actuator_state based on command
     if command > 0:
         actuator_state["pump_3_ph_up_1"] = True
-    else if command < 0:
+    elif command < 0:
         actuator_state["pump_4_ph_down_1"] = True
 
 
 # nutrient_flora_duo_a is a "Rate" of dosage, so we can just change the dosage
 # without resetting to "idle state" since that doesn't exist.
-def nutrient_flora_duo_a_callback(msg):
+def nutrient_flora_duo_a_callback(msg): # float
     command = msg.data
     actuator_state["pump_1_nutrient_a_1"] = command
 
 
-def nutrient_flora_duo_b_callback(msg):
+def nutrient_flora_duo_b_callback(msg): # float
     command = msg.data
     actuator_state["pump_2_nutrient_b_1"] = command
 
 
-def air_flush_on_callback(msg):
+def air_flush_on_callback(msg): # float 0/1
+    command = msg.data
+    actuator_state["air_flush_1"] = bool(command)
 
 
-def light_intensity_blue_callback(msg):
+def light_intensity_blue_callback(msg): # float 0~1
     command = msg.data
     actuator_state["light_intensity_blue"] = command
 
 
-def light_intensity_white_callback(msg):
+def light_intensity_white_callback(msg): # float 0~1
     command = msg.data
     actuator_state["light_intensity_white"] = command
 
 
-def light_intensity_red_callback(msg):
+def light_intensity_red_callback(msg): # float 0~1
     command = msg.data
     actuator_state["light_intensity_red"] = command
 
@@ -169,7 +172,7 @@ def light_intensity_red_callback(msg):
 # and passes it as */commanded. We should set the pump_5_water_1 to HIGH when
 # we receive a True here. I want to deprecate this with something more
 # feedback loop oriented: https://github.com/OpenAgInitiative/openag_brain/issues/270
-def water_level_high_callback(msg):
+def water_level_high_callback(msg): # Bool
     command = msg.data
     if command:
         actuator_state["pump_5_water_1"] = True
@@ -294,11 +297,16 @@ if __name__ == '__main__':
     # Initialize the serial connection
     serial_connection = serial.Serial(serial_port_id, baud_rate, timeout=timeout_s)
 
+    # Latest actuator and sensor states we are aware of.
     actuator_state = {
         header: type_constructor()
         for header, type_constructor in actuator_csv_headers
     }
+    sensor_state = {}
 
+    # These 2 are permanently on.
+    actuator_state["water_aeration_pump_1"] = True
+    actuator_state["water_circulation_pump_1"] = True
 
 
     publish_time = ros_next(publisher_rate_hz)
@@ -334,16 +342,20 @@ if __name__ == '__main__':
         serial_connection.flush()
 
         pairs_or_error = process_message(buf)
-        if pairs_or_error.get("ok") is not None:
-            pairs = pairs_or_error["ok"]
-        else:
+        if type(pairs_or_error) is str:
             error_message = pairs_or_error
             ARDUINO_STATUS_PUBLISHER.publish(error_message)
-
-        if publish_time() and pairs is not None:
-            ARDUINO_STATUS_PUBLISHER.publish("OK")
+        else:
+            pairs = pairs_or_error
             for header, value in pairs:
-                PUBLISHERS[header].publish(value)
+                sensor_state[header] = value
 
+        if publish_time():
+            if type(pairs_or_error) is not str:
+                ARDUINO_STATUS_PUBLISHER.publish("OK")
+            for variable in sensor_state:
+                if variable not in [v.name for v in VALID_SENSOR_VARIABLES]:
+                    continue
+                PUBLISHERS[variable].publish(sensor_state[variable])
 
     serial_connection.close()

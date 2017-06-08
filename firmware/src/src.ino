@@ -257,8 +257,8 @@ bool updateModule(Module &module, String name){
     Serial.print(module.status_level); Serial.print(',');
     Serial.print(name);  Serial.print(',');
     Serial.print(module.status_code);
-    // Serial.print(',');
-    // Serial.print(module.status_msg);
+    Serial.print(',');
+    Serial.print(module.status_msg);
     Serial.print('\n');
     Serial.flush();
   }

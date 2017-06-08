@@ -49,22 +49,25 @@ def process_message(line):
         # WARN/ERR format: "status_code, device_name, message"
         if not status["is_ok"]:
             error_device = values[1]
-            error_message = values[2]
-            message = "{}> {}: {}".format(
+            error_message = values[3] if len(values) >= 4 else values[2]
+
+            message = "arduino_handler {}>  {}: {}".format(
                 status["message"],
                 error_device,
                 error_message)
-            rospy.logerr(message)
+            rospy.logwarn(message)
             return message
         # status: OK
 
         # Zip values with the corresponding environmental variable
         variable_values = values[1:]
-        pairs = ((sensor_csv_headers[0], sensor_csv_headers[1](value))
-            for value in variable_values)
-
+        pairs = ((headers[0], headers[1](value))
+            for headers, value in zip(sensor_csv_headers[1:], variable_values))
         return pairs
-
+    except ValueError:
+        message = "Type conversion error, skipping."
+        rospy.logwarn(message)
+        return message
     except IndexError:
         message = "Short read, received part of a message: {}".format(buf.decode())
         rospy.logwarn(message)

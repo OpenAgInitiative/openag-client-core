@@ -17,71 +17,91 @@ from std_msgs.msg import String
 from roslib.message import get_message_class
 from openag_brain.load_env_var_types import VariableInfo
 
-def expand_unknown_status(status_code):
-    return {
+# below: immutables/consts
+# csv_headers will be hard coded since it will be tightly coupled with Arduino sketch anyways.
+# the associated types are also included in the tuple since it is usually relevant to have around.
+sensor_csv_headers = (
+    ("status", int),
+    ("air_humidity", float),
+    ("air_temperature", float),
+    ("air_carbon_dioxide", float),
+    ("water_temperature", float),
+    ("water_level_low", bool),
+    ("water_level_high", bool),
+    ("water_potential_hydrogen", float),
+    ("water_electrical_conductivity", float)
+)
+
+actuator_csv_headers =  (
+    ("status", int),
+    ("pump_1_nutrient_a_1", float),
+    ("pump_2_nutrient_b_1", float),
+    ("pump_3_ph_up_1", bool),
+    ("pump_4_ph_down_1", bool),
+    ("pump_5_water_1", bool),
+    ("chiller_fan_1", bool),
+    ("chiller_pump_1", bool),
+    ("heater_core_2_1", bool),
+    ("air_flush_1", float),
+    ("water_aeration_pump_1", bool),
+    ("water_circulation_pump_1", bool),
+    ("chamber_fan_1", bool),
+    ("light_intensity_blue", float),
+    ("light_intensity_white", float),
+    ("light_intensity_red", float),
+    ("heater_core_1_1", bool),
+    ("chiller_compressor_1", bool)
+)
+
+actuator_listen_variables = (
+    "air_temperature",
+    "water_potential_hydrogen",
+    "nutrient_flora_duo_a",
+    "nutrient_flora_duo_b",
+    "air_flush_on",
+    "light_intensity_red",
+    "light_intensity_blue",
+    "light_intensity_white",
+    "water_level_high"
+)
+
+ENVIRONMENTAL_VARIABLES = frozenset(
+    VariableInfo.from_dict(d)
+    for d in rospy.get_param("/var_types/environment_variables").itervalues())
+
+VALID_SENSOR_VARIABLES = [v for v in ENVIRONMENTAL_VARIABLES
+    if v.name in [t[0] for t in sensor_csv_headers]]
+
+PUBLISHERS = {
+    variable.name: rospy.Publisher(
+        "{}/raw".format(variable.name),
+        get_message_class(variable.type),
+        queue_size=10)
+    for variable in VALID_SENSOR_VARIABLES
+}
+
+ARDUINO_STATUS_PUBLISHER = rospy.Publisher(
+    "/arduino_status",
+    String,
+    queue_size=10)
+
+VALID_ACTUATOR_VARIABLES = [v for v in ENVIRONMENTAL_VARIABLES
+    if v.name in actuator_listen_variables]
+
+STATUS_CODE_INDEX = {
+    "0": {
+        "is_ok": True,
+        "message": "OK"
+    },
+    "1": {
         "is_ok": False,
-        "message": "Unknown status code {}".format(status_code)
+        "message": "WARN"
+    },
+    "2": {
+        "is_ok": False,
+        "message": "ERROR"
     }
-
-def ros_next(rate_hz):
-    ros_next.prev_time = rospy.get_time()
-    timeout = 1 / rate_hz
-    def closure():
-        curr_time = rospy.get_time()
-        if curr_time - ros_next.prev_time > timeout:
-            ros_next.prev_time = curr_time
-            return True
-        else:
-            return False
-    return closure
-
-# Read the serial message string, and publish to the correct topics
-def process_message(line):
-    try:
-        values = line.decode().split(',')
-        status_code = values[0]
-        # Expand status code to status dict
-        status = (
-            STATUS_CODE_INDEX.get(status_code) or
-            expand_unknown_status(status_code)
-        )
-
-        # WARN/ERR format: "status_code, device_name, message"
-        if not status["is_ok"]:
-            error_device = values[1]
-            error_message = values[3] if len(values) >= 4 else values[2]
-
-            message = "arduino_handler {}>  {}: {}".format(
-                status["message"],
-                error_device,
-                error_message)
-            rospy.logwarn(message)
-            return message
-        # status: OK
-
-        # Zip values with the corresponding environmental variable
-        variable_values = values[1:]
-        pairs = ((headers[0], headers[1](value))
-            for headers, value in zip(sensor_csv_headers[1:], variable_values))
-        return pairs
-    except ValueError:
-        message = "Type conversion error, skipping."
-        rospy.logwarn(message)
-        return message
-    except IndexError:
-        message = "Short read, received part of a message: {}".format(buf.decode())
-        rospy.logwarn(message)
-        serial_connection.close()
-        serial_connection.open()
-        return message
-    # Occasionally, we get rotten bytes which couldn't decode
-    except UnicodeDecodeError:
-        message = "Received weird bits, ignoring: {}".format(buf)
-        rospy.logwarn(message)
-        serial_connection.close()
-        serial_connection.open()
-        return message
-
+}
 
 # These are callbacks that map the */commanded topic to the Arduino actuators.
 # This is a job that was traditionally done by topic_connector.py, but
@@ -105,7 +125,7 @@ def air_temperature_callback(msg): # float -1~1
         ("chiller_compressor_1", bool)
     )
     always = (
-        ("chamber_fan_1", bool)
+        ("chamber_fan_1", bool),
     )
     # Reset the state to idle
     for header, type_constructor in up + down:
@@ -180,116 +200,94 @@ def water_level_high_callback(msg): # Bool
     if command:
         actuator_state["pump_5_water_1"] = True
 
+CALLBACKS = {
+    "air_temperature":          air_temperature_callback,
+    "water_potential_hydrogen": water_potential_hydrogen_callback,
+    "nutrient_flora_duo_a":     nutrient_flora_duo_a_callback,
+    "nutrient_flora_duo_b":     nutrient_flora_duo_b_callback,
+    "air_flush_on":             air_flush_on_callback,
+    "light_intensity_red":      light_intensity_red_callback,
+    "light_intensity_blue":     light_intensity_blue_callback,
+    "light_intensity_white":    light_intensity_white_callback,
+    "water_level_high":         water_level_high_callback
+}
+
+SUBSCRIBERS = {
+    variable.name: rospy.Subscriber(
+        "{}/commanded".format(variable.name),
+        get_message_class(variable.type),
+        CALLBACKS[variable.name]
+        )
+    for variable in VALID_ACTUATOR_VARIABLES
+}
+
+def expand_unknown_status(status_code):
+    return {
+        "is_ok": False,
+        "message": "Unknown status code {}".format(status_code)
+    }
+
+def ros_next(rate_hz):
+    ros_next.prev_time = rospy.get_time()
+    timeout = 1 / rate_hz
+    def closure():
+        curr_time = rospy.get_time()
+        if curr_time - ros_next.prev_time > timeout:
+            ros_next.prev_time = curr_time
+            return True
+        else:
+            return False
+    return closure
+
+# Read the serial message string, and publish to the correct topics
+def process_message(line):
+    try:
+        values = line.decode().split(',')
+        status_code = values[0]
+        # Expand status code to status dict
+        status = (
+            STATUS_CODE_INDEX.get(status_code) or
+            expand_unknown_status(status_code)
+        )
+
+        # WARN/ERR format: "status_code, device_name, message"
+        if not status["is_ok"]:
+            error_device = values[1]
+            error_message = values[3] if len(values) >= 4 else values[2]
+
+            message = "arduino_handler {}>  {}: {}".format(
+                status["message"],
+                error_device,
+                error_message)
+            rospy.logwarn(message)
+            return message
+        # status: OK
+
+        # Zip values with the corresponding environmental variable
+        variable_values = values[1:]
+        pairs = ((headers[0], headers[1](value))
+            for headers, value in zip(sensor_csv_headers[1:], variable_values))
+        return pairs
+    except ValueError:
+        message = "Type conversion error, skipping."
+        rospy.logwarn(message)
+        return message
+    except IndexError:
+        message = "Short read, received part of a message: {}".format(buf.decode())
+        rospy.logwarn(message)
+        serial_connection.close()
+        serial_connection.open()
+        return message
+    # Occasionally, we get rotten bytes which couldn't decode
+    except UnicodeDecodeError:
+        message = "Received weird bits, ignoring: {}".format(buf)
+        rospy.logwarn(message)
+        serial_connection.close()
+        serial_connection.open()
+        return message
 
 if __name__ == '__main__':
     rospy.init_node('handle_arduino')
-
-    # below: immutables/consts
-    # csv_headers will be hard coded since it will be tightly coupled with Arduino sketch anyways.
-    # the associated types are also included in the tuple since it is usually relevant to have around.
-    sensor_csv_headers = (
-        ("status", int),
-        ("air_humidity", float),
-        ("air_temperature", float),
-        ("air_carbon_dioxide", float),
-        ("water_temperature", float),
-        ("water_level_low", bool),
-        ("water_level_high", bool),
-        ("water_potential_hydrogen", float),
-        ("water_electrical_conductivity", float)
-    )
-
-    actuator_csv_headers =  (
-        ("status", int),
-        ("pump_1_nutrient_a_1", float),
-        ("pump_2_nutrient_b_1", float),
-        ("pump_3_ph_up_1", bool),
-        ("pump_4_ph_down_1", bool),
-        ("pump_5_water_1", bool),
-        ("chiller_fan_1", bool),
-        ("chiller_pump_1", bool),
-        ("heater_core_2_1", bool),
-        ("air_flush_1", float),
-        ("water_aeration_pump_1", bool),
-        ("water_circulation_pump_1", bool),
-        ("chamber_fan_1", bool),
-        ("light_intensity_blue", float),
-        ("light_intensity_white", float),
-        ("light_intensity_red", float),
-        ("heater_core_1_1", bool),
-        ("chiller_compressor_1", bool)
-    )
-
-    actuator_listen_variables = (
-        "air_temperature",
-        "water_potential_hydrogen",
-        "nutrient_flora_duo_a",
-        "nutrient_flora_duo_b",
-        "air_flush_on",
-        "light_intensity_red",
-        "light_intensity_blue",
-        "light_intensity_white",
-        "water_level_high"
-    )
-
-    CALLBACKS = {
-        "air_temperature":          air_temperature_callback,
-        "water_potential_hydrogen": water_potential_hydrogen_callback,
-        "nutrient_flora_duo_a":     nutrient_flora_duo_a_callback,
-        "nutrient_flora_duo_b":     nutrient_flora_duo_b_callback,
-        "air_flush_on":             air_flush_on_callback,
-        "light_intensity_red":      light_intensity_red_callback,
-        "light_intensity_blue":     light_intensity_blue_callback,
-        "light_intensity_white":    light_intensity_white_callback,
-        "water_level_high":         water_level_high_callback
-    }
-
-    ENVIRONMENTAL_VARIABLES = frozenset(
-        VariableInfo.from_dict(d)
-        for d in rospy.get_param("/var_types/environment_variables").itervalues())
-
-    VALID_SENSOR_VARIABLES = [v for v in ENVIRONMENTAL_VARIABLES
-        if v.name in [t[0] for t in sensor_csv_headers]]
-
-    PUBLISHERS = {
-        variable.name: rospy.Publisher(
-            "{}/raw".format(variable.name),
-            get_message_class(variable.type),
-            queue_size=10)
-        for variable in VALID_SENSOR_VARIABLES
-    }
-
-    ARDUINO_STATUS_PUBLISHER = rospy.Publisher(
-        "/arduino_status",
-        String,
-        queue_size=10)
-
-    VALID_ACTUATOR_VARIABLES = [v for v in ENVIRONMENTAL_VARIABLES
-        if v.name in actuator_listen_variables]
-
-    SUBSCRIBERS = {
-        variable.name: rospy.Subscriber(
-            "{}/commanded".format(variable.name),
-            get_message_class(variable.type),
-            CALLBACKS[variable.name]
-            )
-        for variable in VALID_ACTUATOR_VARIABLES
-    }
-
-    STATUS_CODE_INDEX = {
-        "0": {
-            "is_ok": True,
-            "message": "OK"
-        },
-        "1": {
-            "is_ok": False,
-            "message": "WARN"
-        },
-        "2": {
-            "is_ok": False,
-            "message": "ERROR"
-        }
-    }
 
     serial_port_id = rospy.get_param("~serial_port_id", "/dev/ttyACM0")
     publisher_rate_hz = rospy.get_param("~publisher_rate_hz", 1)
@@ -322,7 +320,7 @@ if __name__ == '__main__':
         # chiller_pump, heater_core2, air_flush, water_aeration,
         # water_circulation, chamber_fan, blue, white, red, heater_core1,
         # chiller_compressor
-        message = "0,{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n".format(
+        message = "0,{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12},{13},{14},{15},{16}\n".format(
             actuator_state["pump_1_nutrient_a_1"],
             actuator_state["pump_2_nutrient_b_1"],
             actuator_state["pump_3_ph_up_1"],
@@ -341,6 +339,7 @@ if __name__ == '__main__':
             actuator_state["heater_core_1_1"],
             actuator_state["chiller_compressor_1"]
         ).encode('utf-8')
+        rospy.logwarn(message)
         serial_connection.write(message)
         serial_connection.flush()
 

@@ -1,5 +1,6 @@
 #include "openag_tone_actuator.h"
 
+// TODO decide if we want to keep the tone_duration parameter since we already have a _shutoff_ms.
 ToneActuator::ToneActuator(int pin, bool is_active_low, int tone_frequency, int _tone_duration) {
   _pin = pin;
   _is_active_low = is_active_low;
@@ -25,8 +26,13 @@ uint8_t ToneActuator::update() {
 
 uint8_t ToneActuator::set_cmd(bool cmd) {
   _last_cmd = millis();
-  if (cmd) {
-    tone(_pin, _tone_frequency);
+  bool actual_command = _is_active_low ? !cmd : cmd;
+  if (actual_command) {
+    if (_tone_duration > 0){
+      tone(_pin, _tone_frequency, _tone_duration);
+    }else{
+      tone(_pin, _tone_frequency);
+    }
   }
   else {
     noTone(_pin);

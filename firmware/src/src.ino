@@ -162,6 +162,7 @@ void actuatorLoop(){
   // Run the update loop
   bool allActuatorSuccess = true;
 
+
   allActuatorSuccess = updateModule(pump_1_nutrient_a_1, "Pump 1 Nutrient A") && allActuatorSuccess;
   allActuatorSuccess = updateModule(pump_2_nutrient_b_1, "Pump 2 Nutrient B") && allActuatorSuccess;
   allActuatorSuccess = updateModule(pump_3_ph_up_1, "Pump 3 pH Up") && allActuatorSuccess;
@@ -276,6 +277,7 @@ bool any(bool *all){
 }
 
 bool str2bool(String str){
-  return (str == "True");
+  str.toLowerCase();
+  return str.startsWith("true");
 }
 // #endregion

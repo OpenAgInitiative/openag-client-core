@@ -242,7 +242,7 @@ def ros_next(rate_hz):
 # Read the serial message string, and publish to the correct topics
 def process_message(line):
     try:
-        values = line.decode().split(',')
+        values = line[:-1].decode().split(',')
         status_code = values[0]
         # Expand status code to status dict
         status = (
@@ -265,7 +265,7 @@ def process_message(line):
 
         # Zip values with the corresponding environmental variable
         variable_values = values[1:]
-        pairs = ((headers[0], headers[1](value))
+        pairs = tuple((headers[0], headers[1](value))
             for headers, value in zip(sensor_csv_headers[1:], variable_values))
         return pairs
     except ValueError:

@@ -5,15 +5,14 @@
 #include <Wire.h>
 #include "NDIR_I2C.h"
 #include <openag_module.h>
-#include <std_msgs/Int32.h>
 
 
 class MHZ16 : public Module {
   public:
     MHZ16(int i2c_address);
-    void begin();
-    void update();
-    bool get_air_carbon_dioxide(std_msgs::Int32 &msg);
+    uint8_t begin();
+    uint8_t update();
+    int get_air_carbon_dioxide();
 
   private:
     NDIR_I2C _sensor;

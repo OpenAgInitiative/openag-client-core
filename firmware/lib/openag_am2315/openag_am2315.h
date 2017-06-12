@@ -34,31 +34,28 @@
 
 #include <Wire.h>
 #include <openag_module.h>
-#include <std_msgs/Float32.h>
 
 /**
  * \brief Air temperature and air humidity sensor.
  */
 class Am2315 : public Module {
   public:
-    void begin();
-    void update();
-    bool get_air_temperature(std_msgs::Float32 &msg);
-    bool get_air_humidity(std_msgs::Float32 &msg);
+    uint8_t begin();
+    uint8_t update();
+    float get_air_temperature();
+    float get_air_humidity();
 
   private:
     // Private variables
     float _air_temperature;
     float _air_humidity;
-    bool _send_air_temperature;
-    bool _send_air_humidity;
     uint32_t _time_of_last_reading;
     const static uint32_t _min_update_interval = 2000;
     const static int _i2c_address = 0x5c;
     const static int _read_register = 0x03;
 
     // Private methods
-    void readData();
+    bool readData();
 
     // Status codes
     static const uint8_t CODE_WRONG_FUNCTION_CODE = 1;

@@ -2,9 +2,7 @@
 **.DS_Store
 
 # PlatformIO firmware-specific stuff
-# Added 2017-03-22 gordonb
 **.pioenvs
-firmware/src
 
 # Python
 *.swp

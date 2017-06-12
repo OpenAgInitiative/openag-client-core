@@ -9,7 +9,7 @@ Ds18b20::Ds18b20(int pin) : _oneWire(pin) {
   _sensors.setWaitForConversion(false);
 }
 
-void Ds18b20::begin() {
+uint8_t Ds18b20::begin() {
   _sensors.begin();
   status_level = OK;
   status_code = CODE_OK;
@@ -21,9 +21,10 @@ void Ds18b20::begin() {
     status_code = CODE_COULDNT_FIND_ADDRESS;
     status_msg = "Unable to find address for sensor";
   }
+  return status_level;
 }
 
-void Ds18b20::update() {
+uint8_t Ds18b20::update() {
   if (_waiting_for_conversion) {
     if (_sensors.isConversionComplete()) {
       status_level = OK;
@@ -44,11 +45,9 @@ void Ds18b20::update() {
     _waiting_for_conversion = true;
     _time_of_last_query = millis();
   }
+  return status_code;
 }
 
-bool Ds18b20::get_temperature(std_msgs::Float32 &msg) {
-  msg.data = _temperature;
-  bool res = _send_temperature;
-  _send_temperature = false;
-  return res;
+float Ds18b20::get_temperature() {
+  return _temperature;
 }

@@ -17,8 +17,8 @@ class Module {
   public:
     // Public methods
     virtual ~Module() {}; // destructor
-    virtual void begin() = 0;
-    virtual void update() = 0;
+    virtual uint8_t begin() = 0;
+    virtual uint8_t update() = 0;
 
     uint8_t status_level;
     String status_msg;

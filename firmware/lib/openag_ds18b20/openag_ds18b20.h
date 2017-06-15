@@ -14,7 +14,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <openag_module.h>
-#include <std_msgs/Float32.h>
 
 /**
  * \brief Sensor module for temperature
@@ -22,9 +21,9 @@
 class Ds18b20 : public Module {
   public:
     Ds18b20(int pin);
-    void begin();
-    void update();
-    bool get_temperature(std_msgs::Float32 &msg);
+    uint8_t begin();
+    uint8_t update();
+    float get_temperature();
 
   private:
     OneWire _oneWire;

@@ -8,22 +8,23 @@ AtlasEc::AtlasEc(int i2c_address) {
   status_level = OK;
   status_code = CODE_OK;
   status_msg = "";
-  _send_water_electrical_conductivity = false;
   _time_of_last_query = 0;
   _waiting_for_response = false;
   _i2c_address = i2c_address;
 }
 
-void AtlasEc::begin() {
+uint8_t AtlasEc::begin() {
   Wire.begin();
+  Wire.setTimeout(40);
   // Enable only the EC reading
   Wire.print("O,EC,1");
   Wire.print("O,TDS,0");
   Wire.print("O,S,0");
   Wire.print("O,SG,0");
+  return status_level;
 }
 
-void AtlasEc::update() {
+uint8_t AtlasEc::update() {
   if (_waiting_for_response) {
     if (millis() - _time_of_last_query > 1400) {
       read_response();
@@ -32,40 +33,38 @@ void AtlasEc::update() {
   else if (millis() - _time_of_last_query > _min_update_interval) {
     send_query();
   }
+  return status_level;
 }
 
-bool AtlasEc::get_water_electrical_conductivity(std_msgs::Float32 &msg) {
-  msg.data = _water_electrical_conductivity;
-  bool res = _send_water_electrical_conductivity;
-  _send_water_electrical_conductivity = false;
-  return res;
+float AtlasEc::get_water_electrical_conductivity() {
+  return _water_electrical_conductivity;
 }
 
-void AtlasEc::set_dry_calibration(std_msgs::Empty msg) {
+void AtlasEc::set_dry_calibration() {
   Wire.beginTransmission(_i2c_address);
   Wire.print("Cal,dry");
   Wire.endTransmission();
 }
 
-void AtlasEc::set_single_calibration(std_msgs::Float32 msg) {
+void AtlasEc::set_single_calibration(double msg) {
   char buf[17];
-  sprintf(buf, "Cal,one,%.2f", msg.data);
+  sprintf(buf, "Cal,one,%.2f", msg);
   Wire.beginTransmission(_i2c_address);
   Wire.print(buf);
   Wire.endTransmission();
 }
 
-void AtlasEc::set_lowpoint_calibration(std_msgs::Float32 msg) {
+void AtlasEc::set_lowpoint_calibration(double msg) {
   char buf[17];
-  sprintf(buf, "Cal,low,%.2f", msg.data);
+  sprintf(buf, "Cal,low,%.2f", msg);
   Wire.beginTransmission(_i2c_address);
   Wire.print(buf);
   Wire.endTransmission();
 }
 
-void AtlasEc::set_highpoint_calibration(std_msgs::Float32 msg) {
+void AtlasEc::set_highpoint_calibration(double msg) {
   char buf[17];
-  sprintf(buf, "Cal,high,%.2f", msg.data);
+  sprintf(buf, "Cal,high,%.2f", msg);
   Wire.beginTransmission(_i2c_address);
   Wire.print(buf);
   Wire.endTransmission();
@@ -81,8 +80,11 @@ void AtlasEc::send_query() {
 
 void AtlasEc::read_response() {
   Wire.requestFrom(_i2c_address, 20, 1);
-  byte response = Wire.read();
-  String string = Wire.readStringUntil(0);
+  byte response;
+  String string = "1000";
+  if(Wire.available()){
+    response = Wire.read();
+  }
 
   // Check for failure
   if (response == 255) {
@@ -102,11 +104,11 @@ void AtlasEc::read_response() {
     _waiting_for_response = false;
   }
   else if (response == 1) {
+    string = Wire.readStringUntil(0);
     status_level = OK;
     status_code = CODE_OK;
     status_msg = "";
     _water_electrical_conductivity = string.toFloat() / 1000;
-    _send_water_electrical_conductivity = true;
     _waiting_for_response = false;
   }
   else {

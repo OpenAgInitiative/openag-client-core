@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from importlib import import_module
 from ..util import parent_dirname
 from .categories import all_categories, ACTUATORS, SENSORS
@@ -63,9 +64,9 @@ def synthesize_firmware_module_info(modules, module_types):
     Modules are allowed to define attributes on their inputs and outputs that
     override the values defined in their respective module types. This function
     takes as input a dictionary of `modules` (mapping module IDs to
-    :class:`~openag.models.FirmwareModule` objects) and a dictionary of
+    :class:`models.FirmwareModule` objects) and a dictionary of
     `module_types` (mapping module type IDs to
-    :class:`~openag.models.FirmwareModuleType` objects). For each module, it
+    :class:`models.FirmwareModuleType` objects). For each module, it
     synthesizes the information in that module and the corresponding module
     type and returns all the results in a dictionary keyed on the ID of the
     module
@@ -177,3 +178,6 @@ def prune_unspecified_categories(modules, categories):
                 del mod_info["outputs"][output_name]
         res[mod_name] = mod_info
     return res
+
+
+ 

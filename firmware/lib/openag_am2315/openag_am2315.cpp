@@ -21,38 +21,33 @@
  ****************************************************/
 #include "openag_am2315.h"
 
-void Am2315::begin() {
+uint8_t Am2315::begin() {
   Wire.begin(); // enable i2c port
   status_level = OK;
   status_code = CODE_OK;
   status_msg = "";
-  _send_air_temperature = false;
-  _send_air_humidity = false;
   _time_of_last_reading = 0;
+  readData();
+  return status_level;
 }
 
-void Am2315::update() {
+uint8_t Am2315::update() {
   if (millis() - _time_of_last_reading > _min_update_interval) {
       readData();
       _time_of_last_reading = millis();
   }
+  return status_level;
 }
 
-bool Am2315::get_air_temperature(std_msgs::Float32 &msg) {
-  msg.data = _air_temperature;
-  bool res = _send_air_temperature;
-  _send_air_temperature = false;
-  return res;
+float Am2315::get_air_temperature() {
+    return _air_temperature;
 }
 
-bool Am2315::get_air_humidity(std_msgs::Float32 & msg) {
-  msg.data = _air_humidity;
-  bool res = _send_air_humidity;
-  _send_air_humidity = false;
-  return res;
+float Am2315::get_air_humidity() {
+    return _air_humidity;
 }
 
-void Am2315::readData() {
+bool Am2315::readData() {
   uint8_t reply[8];
 
   // Wake up sensor
@@ -83,12 +78,14 @@ void Am2315::readData() {
   if (reply[0] != _read_register) {
     status_level = ERROR;
     status_code = CODE_WRONG_FUNCTION_CODE;
-    status_msg = "Sensor responded with the wrong function code";
+    status_msg = String("Sensor responded with the wrong function code:") + reply[0];
+    return false;
   }
   else if (reply[1] != 4) {
     status_level = ERROR;
     status_code = CODE_NOT_ENOUGH_INFO;
     status_msg = "Sensor did not return enough information";
+    return false;
   }
   else { // good reading
     // Process air humidity
@@ -106,7 +103,7 @@ void Am2315::readData() {
   }
 
   if (status_level == OK) {
-    _send_air_temperature = true;
-    _send_air_humidity = true;
+    return true;
   }
+  return false;
 }

@@ -1,0 +1,16 @@
+#!/bin/bash
+# This removes our 'installed from source' openag_python' package and its
+# command line.  It also adds some python dependencies we now need that were
+# part of that package.
+#
+# debugrob: delete this script after a few months.  If you are reading this after November 2017, delete this file.
+
+set -e
+
+# Deprecate the openag_python module command line - pip won't uninstall
+# packages installed from source.
+sudo mv /usr/local/bin/openag /usr/local/bin/openag.deprecated
+
+# Install some python dependencies that there aren't ros packages for.
+sudo pip install voluptuous HTTPretty pytest
+

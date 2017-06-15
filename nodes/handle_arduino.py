@@ -18,7 +18,7 @@ import tempfile
 import argparse
 import traceback
 import subprocess
-from openag.categories import default_categories
+from openag_lib.firmware.categories import default_categories
 from openag_brain import params
 
 

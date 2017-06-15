@@ -8,8 +8,6 @@
 #include "Arduino.h"
 #include <openag_module.h>
 #include <Wire.h>
-#include <std_msgs/Empty.h>
-#include <std_msgs/Float32.h>
 
 /**
  * \brief Electrical conductivity sensor.
@@ -20,18 +18,17 @@ class AtlasEc : public Module {
     AtlasEc(int i2c_address);
 
     // Public functions
-    void begin();
-    void update();
-    bool get_water_electrical_conductivity(std_msgs::Float32 &msg);
-    void set_dry_calibration(std_msgs::Empty msg);
-    void set_single_calibration(std_msgs::Float32 msg);
-    void set_lowpoint_calibration(std_msgs::Float32 msg);
-    void set_highpoint_calibration(std_msgs::Float32 msg);
+    uint8_t begin();
+    uint8_t update();
+    float get_water_electrical_conductivity();
+    void set_dry_calibration();
+    void set_single_calibration(double msg);
+    void set_lowpoint_calibration(double msg);
+    void set_highpoint_calibration(double msg);
 
   private:
     // Private variables
     float _water_electrical_conductivity;
-    bool _send_water_electrical_conductivity;
     uint32_t _time_of_last_query;
     bool _waiting_for_response;
     const static uint32_t _min_update_interval = 3000;

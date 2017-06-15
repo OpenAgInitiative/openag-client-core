@@ -10,7 +10,7 @@ PwmActuator::PwmActuator(int pin, bool is_active_low, float threshold) {
   status_msg = "";
 }
 
-void PwmActuator::begin() {
+uint8_t PwmActuator::begin() {
   pinMode(_pin, OUTPUT);
   if (_is_active_low) {
     digitalWrite(_pin, HIGH);
@@ -18,9 +18,10 @@ void PwmActuator::begin() {
   else {
     digitalWrite(_pin, LOW);
   }
+  return status_level;
 }
 
-void PwmActuator::update() {
+uint8_t PwmActuator::update() {
   uint32_t curr_time = millis();
   if ((curr_time - _last_cmd) > _max_update_interval) {
     if (_is_active_low) {
@@ -30,16 +31,17 @@ void PwmActuator::update() {
       analogWrite(_pin, 0);
     }
   }
+  return status_level;
 }
 
-void PwmActuator::set_cmd(std_msgs::Float32 cmd) {
+uint8_t PwmActuator::set_cmd(float cmd) {
   _last_cmd = millis();
-  float val = cmd.data;
+  float val = cmd;
   if (val < 0 || val > 1) {
     status_level = WARN;
     status_code = CODE_INVALID_COMMAND;
     status_msg = "Invalid command received";
-    return;
+    return status_level;
   }
   else {
     status_level = OK;
@@ -52,4 +54,5 @@ void PwmActuator::set_cmd(std_msgs::Float32 cmd) {
   }
   int pwm_value = val*255;
   analogWrite(_pin, pwm_value);
+  return status_level;
 }

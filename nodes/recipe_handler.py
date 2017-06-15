@@ -13,17 +13,20 @@ instance of this module per environment in the system.
 """
 import rospy
 from roslib.message import get_message_class
-from openag.db_names import ENVIRONMENTAL_DATA_POINT, RECIPE
-from openag_brain.constants import NULL_SETPOINT_SENTINEL
-from openag.cli.config import config as cli_config
-from openag.models import EnvironmentalDataPoint
 from couchdb import Server
 from threading import RLock
-from openag_brain import params, services
+
+# srv causing import issues, if it is not first :(
 from openag_brain.srv import StartRecipe, Empty
+from openag_lib.db_bootstrap.db_names import ENVIRONMENTAL_DATA_POINT, RECIPE
+from openag_lib.config import config 
+from openag_brain import params, services
+from openag_brain.constants import NULL_SETPOINT_SENTINEL
+from openag_brain.models import EnvironmentalDataPoint
 from openag_brain.load_env_var_types import VariableInfo
 from openag_brain.recipe_interpreters import interpret_simple_recipe, interpret_flexformat_recipe
-from openag_brain.utils import gen_doc_id, read_environment_from_ns, trace, TRACE
+from openag_brain.utils import gen_doc_id, read_environment_from_ns
+from openag_brain.settings import trace, TRACE
 from std_msgs.msg import String, Float64, Bool
 
 
@@ -248,9 +251,12 @@ class RecipeHandler:
 if __name__ == '__main__':
     if TRACE:
         rospy.init_node("recipe_handler", log_level=rospy.DEBUG)
+        pub_debug = rospy.Publisher('debug/recipe_handler', \
+            String, queue_size=10)
     else:
         rospy.init_node("recipe_handler")
-    db_server = cli_config["local_server"]["url"]
+    db_server = config["local_server"]["url"]
+
     if not db_server:
         raise RuntimeError("No local database specified")
     server = Server(db_server)
@@ -289,6 +295,8 @@ if __name__ == '__main__':
 
             # Get recipe state and publish it
             setpoints = interpret_recipe(recipe_doc, start_time, now_time)
+            trace("Start_time: %s  Now_time: %s", start_time, now_time)
+                            
             for variable, value in setpoints:
                 try:
                     pub = PUBLISHERS[variable]
@@ -296,7 +304,9 @@ if __name__ == '__main__':
                     msg = 'Recipe references invalid variable "{}"'
                     rospy.logwarn(msg.format(variable))
                     continue
-
+                if TRACE:
+                    pub_debug.publish("{} : {}".format(variable, value))
+            
                 # Publish any setpoints that we can
                 trace("recipe_handler publish: %s, %s", variable, value)
                 if variable == RECIPE_END.name:

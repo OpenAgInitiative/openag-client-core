@@ -13,10 +13,13 @@ expected. There should be exactly one instance of this module in the system
 import rospy
 import rosgraph
 import rostopic
-from openag.utils import synthesize_firmware_module_info
-from openag.models import FirmwareModule, FirmwareModuleType
-from std_msgs.msg import Bool, Float32, Float64
+
+# You MUST import this msg package BEFORE any internal 'openag_brain' python
+# code.  Or you will get "ImportError: No module named msg".
 from openag_brain.msg import SensorInfo
+from openag_lib.firmware.util import synthesize_firmware_module_info
+from openag_brain.models import FirmwareModule, FirmwareModuleType
+from std_msgs.msg import Bool, Float32, Float64
 from roslib.message import get_message_class
 
 def connect_topics(

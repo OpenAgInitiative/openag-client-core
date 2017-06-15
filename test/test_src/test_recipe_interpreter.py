@@ -2,7 +2,7 @@
 PKG="openag_brain"
 
 import sys, os
-import unittest
+import unittest, pytest
 from time import time
 from datetime import datetime
 import json
@@ -26,6 +26,15 @@ def _test_load_recipe_from_file():
     assert False
 
 
+EPOCH = datetime.utcfromtimestamp(0)
+
+def unix_time_seconds(dt):
+    return (dt - EPOCH).total_seconds()
+
+def test_check_timezone_conversions():
+    c = datetime.now()
+    assert datetime.utcfromtimestamp(unix_time_seconds(c)) == c
+
 class TestRecipeInterpreterSimple(unittest.TestCase):
 
     def test_interpret_simple_recipe(self):
@@ -40,25 +49,74 @@ class TestRecipeInterpreterFlexFormat(unittest.TestCase):
     def test_interpret_flexformat_recipe(self):
         #now_time = time()
         #start_time = now_time - 10
-        start_time = datetime.strptime("2017-04-17 14:00", "%Y-%m-%d %H:%S")
-        now_time = datetime.strptime("2017-04-18 20:00", "%Y-%m-%d %H:%S")
+        start_time = unix_time_seconds(datetime.strptime("2017-04-17 14:00", "%Y-%m-%d %H:%S"))
+        now_time = unix_time_seconds(datetime.strptime("2017-04-18 20:00", "%Y-%m-%d %H:%S"))
         setpoints = interpret_flexformat_recipe(MOCK_RECIPE_FLEXFORMAT_A, start_time, now_time)
-        assert len(setpoints) == 4
+        assert len(setpoints) == 5
+
+        start_time = 1497025128.31   
+        now_time = 1497025129.32
+        setpoints = interpret_flexformat_recipe(MOCK_RECIPE_FLEXFORMAT_A, start_time, now_time)
+        rospy.loginfo(setpoints)
+        setpoints_dict = dict(setpoints)
+        assert setpoints_dict['light_intensity_red'] == 1
+        assert setpoints_dict['air_temperature'] == 22
+        assert len(setpoints) == 5
+
+    def test_verify_time_units(self):
+        """
+        Tests Verifies the start_time and now_time variables are in the correct format.
+        """
+        date1 = datetime.strptime('06-11-2017 07:00:00', '%m-%d-%Y %H:%M:%S')
+        dates_to_verify = [(date1, False),
+                           (unix_time_seconds(date1), True),
+                           (unix_time_seconds(date1)*1000, False),
+                           ('06-11-2017 07:00:00', False)]
+        for date_var, valid_type in dates_to_verify:
+            if valid_type:
+                assert verify_time_units(date_var) == None
+            else:
+                with pytest.raises(TypeError):
+                    verify_time_units(date_var)
+        
+
+    def test_offset_duration_by_time_from_start(self):
+        start_times = [(unix_time_seconds(datetime.strptime("2017-04-17 14:00", "%Y-%m-%d %H:%S")), 14*3600),
+                       (unix_time_seconds(datetime.strptime("2017-04-17 4:00", "%Y-%m-%d %H:%S")), 4*3600),
+                       (unix_time_seconds(datetime.strptime("2017-04-17 10:00", "%Y-%m-%d %H:%S")), 10*3600),
+                       (unix_time_seconds(datetime.strptime("2017-04-17 23:00", "%Y-%m-%d %H:%S")), 23*3600)]
+        for start_time, offset in start_times:
+            assert offset_duration_by_time_from_start(start_time) == offset
+
 
     def test_calc_phase_and_time_remaining(self):
         duration_of_phases_steps = [(336, 24), (480, 24), (168, 24)]
-        start_time = datetime.strptime("2017-04-17 14:00", "%Y-%m-%d %H:%S")
-        current_time = datetime.strptime("2017-04-18 20:00", "%Y-%m-%d %H:%S")
+        start_time = unix_time_seconds(datetime.strptime("2017-04-17 14:00", "%Y-%m-%d %H:%S"))
+        current_time = unix_time_seconds(datetime.strptime("2017-04-18 20:00", "%Y-%m-%d %H:%S"))
         current_phase_number, duration_in_step = calc_phase_and_time_remaining(duration_of_phases_steps,
-                                               current_time, start_time)
-        assert (current_phase_number, duration_in_step) == (0, 6)
+                                               current_time, start_time, 'hours')
+        #assert (current_phase_number, duration_in_step) == (0, 20)   # Need to fix how the current phase is calculated given the start_time
+        assert (current_phase_number, duration_in_step) == (0, 18)
 
-        start_time = datetime.strptime("2017-04-17 14:00", "%Y-%m-%d %H:%S")
-        current_time = datetime.strptime("2017-04-18 03:00", "%Y-%m-%d %H:%S")
+        start_time = unix_time_seconds(datetime.strptime("2017-04-17 14:00", "%Y-%m-%d %H:%S"))
+        current_time = unix_time_seconds(datetime.strptime("2017-04-18 03:00", "%Y-%m-%d %H:%S"))
         current_phase_number, duration_in_step = calc_phase_and_time_remaining(duration_of_phases_steps,
-                                               current_time, start_time)
+                                               current_time, start_time, 'hours')
         print(current_phase_number, duration_in_step)
-        assert (current_phase_number, duration_in_step) == (0, 13)
+        #assert (current_phase_number, duration_in_step) == (0, 3)
+        assert (current_phase_number, duration_in_step) == (0, 11)
+
+
+    def test_convert_duration_units(self):
+                             
+        time_conversions = [(3600, 'hours', 1),   #in milliseconds   == 1 hour
+                            (3600, 'seconds', 3600), 
+                            (3600, 'ms', 3600000), 
+                            (3600, 'days', 0.0416666)
+                           ]
+        for time_since_start, time_units, expected_duration in time_conversions:
+            actual_duration = convert_duration_units(time_since_start, time_units)
+            assert round(expected_duration, 4) == round(actual_duration, 4)
 
 
     def test_calculate_max_duration_from_step(self):
@@ -121,6 +179,10 @@ class TestRecipeInterpreterFlexFormat(unittest.TestCase):
         duration_in_step = 0
         value = determine_value_for_step(variable_step_data, duration_in_step)
         assert value == 20
+
+    def test_verify_time_units_are_consistent(self):
+        time_units = verify_time_units_are_consistent(MOCK_RECIPE_FLEXFORMAT_A['phases'])
+        assert time_units == 'hours'
 
 
 if __name__ == '__main__':

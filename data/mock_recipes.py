@@ -30,72 +30,247 @@ MOCK_RECIPE_SIMPLE_B = {
 }
 
 MOCK_RECIPE_FLEXFORMAT_A = {
-    "_id": "general_greens",
-    "format": "flexformat",
-    "version": "1.0",
-    "seeds": ["green_lettuce_seed", "romaine_lettuce_seed"],
-    "plant_type": ["lettuce", "green"],
-    "certified_by": ["SuperSmartScientist"],
-    "optimization": ["general purpose"],
+    "_id": "example_recipe_flexformat",
     "author": "John Doe",
-    "rating": 20,
-    "downloads": 10000,
+    "certified_by": [
+        "SuperSmartScientist"
+    ],
     "date_created": "2017-02-08",
+    "downloads": 10000,
+    "format": "flexformat",
+    "optimization": [
+        "general purpose"
+    ],
     "phases": [
-          { "name": "early",
+        {
             "cycles": 14,
-            "time_units" : "hours",
-            "variable_units": {"air_temperature": "Celcius",
-                               "nutrient_flora_duo_a": "ml",
-                               "nutrient_flora_duo_b": "ml",
-                               "light_illuminance": "percent_relative"},
-            "step": { "air_temperature": [{"start_time": 0, "end_time": 6, "value": 20},
-                                          {"start_time": 6, "end_time": 18, "value": 23},
-                                          {"start_time": 18, "end_time": 24, "value": 19}],
-                      "nutrient_flora_duo_a": [{"start_time": 0, "end_time": 6, "value": 5},
-                                               {"start_time": 6, "end_time": 18, "value": 2},
-                                               {"start_time": 18, "end_time": 24, "value": 5}],
-                      "nutrient_flora_duo_b": [{"start_time": 0, "end_time": 6, "value": 2}],
-                      "light_illuminance": [{"start_time": 0, "end_time": 6, "value": 4},
-                                            {"start_time": 18, "end_time": 24, "value": 3}],
-                },
-          },
-          { "name": "middle",
-            "cycles": 20,
-            "time_units" : "hours",
-            "variable_units": {"air_temperature": "Celcius",
-                               "nutrient_flora_duo_a": "ml",
-                               "nutrient_flora_duo_b": "ml",
-                               "light_illuminance": "percent_relative"},
-            "step": { "air_temperature": [{"start_time": 0, "end_time": 6, "value": 20},
-                                          {"start_time": 6, "end_time": 18, "value": 23},
-                                          {"start_time": 18, "end_time": 24, "value": 19}],
-                      "nutrient_flora_duo_a": [{"start_time": 0, "end_time": 6, "value": 5},
-                                               {"start_time": 6, "end_time": 18, "value": 2},
-                                               {"start_time": 18, "end_time": 24, "value": 5}],
-                      "nutrient_flora_duo_b": [{"start_time": 0, "end_time": 6, "value": 2}],
-                      "light_illuminance": [{"start_time": 0, "end_time": 6, "value": 4},
-                                            {"start_time": 18, "end_time": 24, "value": 3}]
-                },
-          },
-          { "name": "late",
-            "cycles": 7,
-            "time_units" : "hours",
-            "variable_units": {"air_temperature": "Celcius",
-                               "nutrient_flora_duo_a": "ml",
-                               "nutrient_flora_duo_b": "ml",
-                               "light_illuminance": "percent_relative"},
+            "name": "early",
             "step": {
-                      "air_temperature": [{"start_time": 0, "end_time": 6, "value": 20},
-                                          {"start_time": 6, "end_time": 18, "value": 23},
-                                          {"start_time": 18, "end_time": 24, "value": 19}],
-                      "nutrient_flora_duo_a": [{"start_time": 0, "end_time": 6, "value": 5},
-                                               {"start_time": 6, "end_time": 18, "value": 2},
-                                               {"start_time": 18, "end_time": 24, "value": 5}],
-                      "nutrient_flora_duo_b": [{"start_time": 0, "end_time": 6, "value": 2}],
-                      "light_illuminance": [{"start_time": 0, "end_time": 6, "value": 4},
-                                            {"start_time": 18, "end_time": 24, "value": 3}]
-                },
-          }
-        ]
-  }
+                "air_temperature": [
+                    {
+                        "end_time": 7,
+                        "start_time": 0,
+                        "value": 22
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 7,
+                        "value": 25
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 23
+                    }
+                ],
+                "light_intensity_blue": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 0
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 6,
+                        "value": 1
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 0
+                    }
+                ],
+                "light_intensity_red": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 1
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 6,
+                        "value": 1
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 0
+                    }
+                ],
+                "nutrient_flora_duo_a": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 5
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 6,
+                        "value": 2
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 5
+                    }
+                ],
+                "nutrient_flora_duo_b": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 2
+                    }
+                ]
+            },
+            "time_units": "hours",
+            "variable_units": {
+                "air_temperature": "Celcius",
+                "light_illuminance": "percent_relative",
+                "nutrient_flora_duo_a": "ml",
+                "nutrient_flora_duo_b": "ml"
+            }
+        },
+        {
+            "cycles": 20,
+            "name": "middle",
+            "step": {
+                "air_temperature": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 20
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 6,
+                        "value": 23
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 19
+                    }
+                ],
+                "light_illuminance": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 4
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 3
+                    }
+                ],
+                "nutrient_flora_duo_a": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 5
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 6,
+                        "value": 2
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 5
+                    }
+                ],
+                "nutrient_flora_duo_b": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 2
+                    }
+                ]
+            },
+            "time_units": "hours",
+            "variable_units": {
+                "air_temperature": "Celcius",
+                "light_illuminance": "percent_relative",
+                "nutrient_flora_duo_a": "ml",
+                "nutrient_flora_duo_b": "ml"
+            }
+        },
+        {
+            "cycles": 7,
+            "name": "late",
+            "step": {
+                "air_temperature": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 20
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 6,
+                        "value": 23
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 19
+                    }
+                ],
+                "light_illuminance": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 4
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 3
+                    }
+                ],
+                "nutrient_flora_duo_a": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 5
+                    },
+                    {
+                        "end_time": 18,
+                        "start_time": 6,
+                        "value": 2
+                    },
+                    {
+                        "end_time": 24,
+                        "start_time": 18,
+                        "value": 5
+                    }
+                ],
+                "nutrient_flora_duo_b": [
+                    {
+                        "end_time": 6,
+                        "start_time": 0,
+                        "value": 2
+                    }
+                ]
+            },
+            "time_units": "hours",
+            "variable_units": {
+                "air_temperature": "Celcius",
+                "light_illuminance": "percent_relative",
+                "nutrient_flora_duo_a": "ml",
+                "nutrient_flora_duo_b": "ml"
+            }
+        }
+    ],
+    "plant_type": [
+        "lettuce",
+        "green"
+    ],
+    "rating": 20,
+    "seeds": [
+        "green_lettuce_seed",
+        "romaine_lettuce_seed"
+    ],
+    "version": "1.0"
+}

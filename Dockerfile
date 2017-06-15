@@ -45,15 +45,16 @@ RUN sudo chown -R pi:pi ~/catkin_ws
 # Install ROS boostrapping tool
 RUN sudo apt-get update && sudo apt-get install --no-install-recommends -y -q \
     python-pip python-rosdep
+
+# Install some python dependencies that there aren't ros packages for.
+RUN sudo pip install -q voluptuous 
+
 # Install dependencies with rosdep
 RUN sudo rosdep init && rosdep update && rosdep install --from-paths ~/catkin_ws/src --ignore-src --rosdistro indigo -y -r --os=debian:jessie
 RUN cd ~/catkin_ws && ./src/catkin/bin/catkin_make install
 # Add .bashrc
 RUN echo -e '[ -z "$PS1" ] && return' >~/.bashrc
 RUN echo -e 'source ~/catkin_ws/install/setup.bash' >>~/.bashrc
-# Install openag_python from the git repository
-RUN cd ~ && git clone http://github.com/OpenAgInitiative/openag_python.git
-RUN sudo pip install ./openag_python
 
 # Set up ROS environment vars
 ENV LANG=en_US.UTF-8 ROS_DISTRO=indigo

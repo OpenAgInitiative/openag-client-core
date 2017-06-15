@@ -4,15 +4,9 @@ import time
 import atexit
 import argparse
 import subprocess
-import multiprocessing as mp
 
-from openag.cli.config import config as cli_config
-from openag.db_names import (
-    SOFTWARE_MODULE, FIRMWARE_MODULE, ENVIRONMENTAL_DATA_POINT
-)
-
-from openag_brain.srv import SetCategories
-from openag_brain.utils import resolve_fixtures
+from openag_lib.config import config 
+from openag_lib.db_bootstrap.db_init import db_init 
 
 modules = None
 
@@ -29,24 +23,22 @@ def spawn_modules(launch_file, screen=False):
     return subprocess.Popen(roslaunch_command)
 
 
+#------------------------------------------------------------------------------
 def main(launch_file, api_server, db_server, screen):
     # Initialize the database
     print "Initializing the database"
-    db_server = db_server or cli_config["local_server"]["url"]
-    command = ["openag", "db", "init"]
-    if db_server:
-        command.extend(["--db_url", db_server])
-    db_server = db_server or "http://localhost:5984"
+    db_server = db_server or config["local_server"]["url"] or \
+        "http://localhost:5984"
     api_server = api_server or "http://localhost:5000"
-    command.extend(["--api_url", api_server])
-    if subprocess.call(command):
-        raise RuntimeError("Failed to initialize database")
+    db_init(db_server, api_server)
 
     global modules
     print "Spawning software modules"
     modules = spawn_modules(launch_file, screen)
     modules.wait()
 
+
+#------------------------------------------------------------------------------
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="""
@@ -76,6 +68,7 @@ the screen. Useful for debugging.
     vals = parser.parse_args()
     main(
         launch_file=vals.launch_file,
-        api_server=vals.api_server, db_server=vals.db_server,
+        api_server=vals.api_server, 
+        db_server=vals.db_server,
         screen=vals.screen
     )

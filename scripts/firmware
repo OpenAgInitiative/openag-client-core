@@ -2,7 +2,6 @@
 """
 This script is used to:
 
-- Generate an Arduino sketch from individual OpenAg firmware module classes.
 - Build a hex file using ``platformio``
 - (Optionally) flash that hex file to the Arduino.
 
@@ -12,94 +11,18 @@ For information on how to use it::
 
 Where to find things:
 
-- Individual firmware libraries are in ``firmware/lib``. These module files
-  are compiled into an Arduino sketch by the codegen system.
-- The generated sketch is placed in ``firmware/src/src.ino`` by default.
+- Individual firmware libraries are in ``firmware/lib``.
+- The sketch is placed in ``firmware/src/src.ino`` by default.
 - The compiled ``.hex`` file is placed in
   ``firmware/.pioenvs/megaatmega2560/firmware.hex``. This is the default
   location in which platformio places hex files.
 """
-import yaml
 import argparse
 import subprocess
 from os import path, makedirs
 
-from openag_lib.util import index_by_id
-from openag_lib.firmware.base import CodeGen
-from openag_lib.firmware.categories import all_categories, default_categories
-from openag_lib.firmware.util import (
-    synthesize_firmware_module_info, prune_unspecified_categories,
-    load_firmware_type_manifests, load_plugin)
-
 # Relative path (from script execution) to the ROS package root.
 DEFAULT_PROJECT_DIR = "~/catkin_ws/src/openag_brain/firmware"
-
-# The name of the module manifest file.
-MODULE_FILE = "module.json"
-FIRMWARE_MODULE_TYPE = "firmware_module_type"
-FIRMWARE_MODULE = "firmware_module"
-
-def gen_firmware(
-    categories, params, project_dir, plugin,
-    status_update_interval
-):
-    """
-    Generate code for this project and run it.
-    Internal function we use for both run and flash commands.
-    """
-    # Make sure the project has been initialized
-    pio_config = path.join(project_dir, "platformio.ini")
-    if not path.isfile(pio_config):
-        raise RuntimeError(
-            "Not an OpenAg firmware project. To initialize a new project "
-            "please use \"rosrun openag_brain init_pio\" command"
-        )
-
-    firmware_type_params = params.get(FIRMWARE_MODULE_TYPE, [])
-    firmware_params = params.get(FIRMWARE_MODULE, [])
-
-    firmware_types = [doc for doc in firmware_type_params]
-    firmware = [doc for doc in firmware_params]
-
-    lib_path = path.join(project_dir, "lib")
-    manifests = load_firmware_type_manifests(lib_path)
-    # Append all manifests to the firmware types
-    for manifest in manifests:
-        firmware_types.append(manifest)
-
-    module_types = index_by_id(firmware_types)
-    modules = index_by_id(firmware)
-    # Synthesize the module and module type dicts
-    modules = synthesize_firmware_module_info(modules, module_types)
-    # Update the module inputs and outputs using the categories
-    modules = prune_unspecified_categories(modules, categories)
-
-    if len(modules.keys()) == 0:
-        print("Warning: no modules specified for the project")
-
-    # Generate src.ino
-    src_dir = path.join(project_dir, "src")
-    src_file_path = path.join(src_dir, "src.ino")
-    # Load the plugins
-    plugin_fns = (load_plugin(plugin_name) for plugin_name in plugin)
-    # Run modules through each plugin
-    plugins = [plugin_fn(modules) for plugin_fn in plugin_fns]
-
-    # Generate the code
-    codegen = CodeGen(
-        modules=modules, plugins=plugins,
-        status_update_interval=status_update_interval
-    )
-    pio_ids = (dep["id"] for dep in codegen.all_pio_dependencies())
-    for _id in pio_ids:
-        subprocess.call(["platformio", "lib", "install", str(_id)], cwd=project_dir)
-    # Create src dir if it doesn't already exist.
-    try:
-        makedirs(src_dir)
-    except:
-        pass
-    with open(src_file_path, "w") as f:
-        codegen.write_to(f)
 
 def build_firmware(project_dir, target):
     cmd = (
@@ -116,21 +39,6 @@ if __name__ == "__main__":
         """,
     )
     parser.add_argument(
-        "param_file",
-        type=argparse.FileType("r"),
-        help="""YAML file describing the firmware module configuration to be flashed.
-        This is the same file that is used for rosparam in the launch file."""
-    )
-    default_plugin = "ros"
-    parser.add_argument(
-        "-p", "--plugin",
-        help="Enable a specific codegen plugin. (Default {})"
-            .format(default_plugin),
-        nargs='*',
-        choices=["ros", "csv"],
-        default=[default_plugin]
-    )
-    parser.add_argument(
         "-t", "--target",
         help="PlatformIO target (e.g. upload). You can omit this if you just "
             "want to generate a .hex file. If you want to flash the Arduino "
@@ -143,14 +51,6 @@ if __name__ == "__main__":
         default=5
     )
     parser.add_argument(
-        "-c", "--categories",
-        help="A list of the categories of inputs and outputs that should "
-            "be enabled. (Default {})".format(default_categories),
-        default=default_categories,
-        choices=all_categories,
-        nargs="*"
-    )
-    parser.add_argument(
         "-d", "--project_dir",
         help="the path to the platformio project dir "
             "(Default {}".format(DEFAULT_PROJECT_DIR),
@@ -158,17 +58,9 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    params = yaml.load(args.param_file)
     # Expand project dir path
     project_dir = path.normpath(path.expanduser(args.project_dir))
-    gen_firmware(
-        params=params,
-        project_dir=project_dir,
-        categories=args.categories,
-        plugin=args.plugin,
-        status_update_interval=args.status_update_interval
-    )
     build_firmware(
         project_dir=project_dir,
-        target=args.target
+        target=args.target or None
     )

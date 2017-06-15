@@ -11,7 +11,7 @@ PulseActuator::PulseActuator(int pin, bool is_active_low, int pulse_ms, int upda
   status_msg = "";
 }
 
-void PulseActuator::begin() {
+uint8_t PulseActuator::begin() {
   pinMode(_pin, OUTPUT);
   if (_is_active_low) {
     digitalWrite(_pin, HIGH);
@@ -19,33 +19,36 @@ void PulseActuator::begin() {
   else {
     digitalWrite(_pin, LOW);
   }
+  return status_level;
 }
 
-void PulseActuator::update() {}
-
-void PulseActuator::set_cmd(std_msgs::Bool cmd) {
+uint8_t PulseActuator::update() {
   uint32_t curr_time = millis();
-  if ((curr_time - _last_cmd) > _update_ms) { // Only pulse once every update_ms
+  // If it's been _pulse_ms of time ON, turn oFF.
+  if(_state && (curr_time - _last_cmd) > _pulse_ms){
+    _state = false;
     _last_cmd = curr_time;
-    if (_is_active_low) {
-      if (cmd.data) {
-        digitalWrite(_pin, LOW);
-        delay(_pulse_ms);
-        digitalWrite(_pin, HIGH);
-      }
-      else {
-        digitalWrite(_pin, HIGH);
-      }
-    }
-    else {
-      if (cmd.data) {
-        digitalWrite(_pin, HIGH);
-        delay(_pulse_ms);
-        digitalWrite(_pin, LOW);
-      }
-      else {
-        digitalWrite(_pin, LOW);
-      }
-    }
   }
+  digitalWrite(_pin, bool2command(_state));
+  return status_level;
+}
+
+uint8_t PulseActuator::set_cmd(bool cmd) {
+  uint32_t curr_time = millis();
+
+  // Only pulse once every update_ms
+  if ((curr_time - _last_cmd) < _update_ms) {
+    return status_level;
+  }
+
+  _last_cmd = curr_time;
+  _state = cmd;
+
+  return status_level;
+}
+
+// Take true/false and convert to HIGH/LOW based on is_active_low
+uint8_t PulseActuator::bool2command(bool isOn){
+  bool realState = _is_active_low ? !isOn : isOn;
+  return realState ? HIGH : LOW;
 }

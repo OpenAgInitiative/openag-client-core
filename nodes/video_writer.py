@@ -8,11 +8,13 @@ import rospy
 import tempfile
 import threading
 import subprocess
-from openag.cli.config import config as cli_config
-from openag.couch import Server
-from openag.db_names import ENVIRONMENTAL_DATA_POINT
+
+from couchdb import Server
+from openag_lib.config import config as cli_config
+from openag_lib.db_bootstrap.db_names import ENVIRONMENTAL_DATA_POINT
 from openag_brain.video_helpers import *
 from openag_brain.load_env_var_types import create_variables, VariableInfo
+
 # Filter a list of environmental variables that are specific to camera
 CAMERA_VARIABLES = create_variables(
     rospy.get_param('/var_types/camera_variables'))

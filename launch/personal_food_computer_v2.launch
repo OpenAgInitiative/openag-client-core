@@ -50,8 +50,10 @@
     <node pkg="openag_brain" type="direct_controller.py" name="nutrient_flora_duo_b_controller_1">
       <param name="variable" value="nutrient_flora_duo_b" type="str"/>
     </node>
-    <node pkg="openag_brain" type="direct_controller.py" name="air_flush_on_controller_1">
+    <node pkg="openag_brain" type="ebb_flow_controller.py" name="air_flush_on_controller_1">
       <param name="variable" value="air_flush_on" type="str"/>
+      <param name="on_time" value="10" type="int"/>
+      <param name="off_time" value="600" type="int"/>
     </node>
     <node pkg="openag_brain" type="sensor_persistence.py" name="sensor_persistence_1">
       <param name="max_update_interval" value="600" type="int"/>
@@ -64,13 +66,14 @@
     <node pkg="usb_cam" type="usb_cam_node" name="aerial_image">
       <rosparam file="$(find openag_brain)/launch/usb_cam.yaml" />
     </node>
+    <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">
+      <param name="publisher_rate_hz" value="1" type="int"/>
+      <param name="baud_rate" value="115200" type="int"/>
+    </node>
   </group>
   <node pkg="openag_brain" type="expand_diagnostics.py" name="expand_diagnostics"/>
-  <node pkg="openag_brain" type="handle_arduino.py" name="arduino_handler">
-    <param name="serial_port" value="/dev/ttyACM0" type="str"/>
-  </node>
+
   <node pkg="openag_brain" type="api.py" name="api"/>
-  <node pkg="openag_brain" type="topic_connector.py" name="topic_connector" />
   <node pkg="openag_brain" type="sensor_info_publisher.py" name="sensor_info_publisher"/>
   <test pkg="openag_brain" test-name="test_pub_desired_topics" type="test_pub_desired_topics.py" ns="$(arg environment_1)" time-limit="600.0"/>
 </launch>

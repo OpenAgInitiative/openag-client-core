@@ -314,13 +314,18 @@ def process_message(line):
         rospy.logwarn(message)
         return message
 
-def connect_serial(serial_connection=None):
+def close_serial():
+    if serial_connection is not None:
+        serial_connection.close()
+
+def connect_serial():
     timeout_s = 2 / serial_rate_hz # serial port timeout is 2x loop rate
     baud_rate = rospy.get_param("~baud_rate", 115200)
 
     # Initialize the serial connection
     path = "/dev/serial/by-id"
     port = None
+    close_serial()
     while port is None:
         try:
 
@@ -333,12 +338,14 @@ def connect_serial(serial_connection=None):
             port = ports[0]
             serial_connection = serial.Serial(os.path.join(path, port),
                                               baud_rate,
+                                              dsrdtr = True, # Causes an Arduino soft reset
                                               timeout=timeout_s,
                                               writeTimeout=timeout_s)
             return serial_connection
         except Exception as e:
             rospy.logwarn(e)
             rospy.sleep(0.2) #seconds
+
 
 if __name__ == '__main__':
     if TRACE:
@@ -355,6 +362,9 @@ if __name__ == '__main__':
     publish_time = ros_next(publisher_rate_hz)
 
     arduino_delay_s = 0.25 / serial_rate_hz # Reserve 25% of loop period for Arduino comm delays
+
+    MAX_EMPTY_READS = 4 # Arduino error messages cause empty reads, allow 4 consecutive errors
+    empty_read_count = 0 # Arduino consecutive empty read counter
 
     while not rospy.is_shutdown():
         # These 2 are permanently on.
@@ -405,6 +415,15 @@ if __name__ == '__main__':
             rospy.sleep(arduino_delay_s)
             # Blocks until one line is read or times out
             buf = serial_connection.readline() 
+            # Count consecutive empty reads, raise exception if threshold is exceeded
+            if buf == "":
+                empty_read_count += 1
+            else:
+                empty_read_count = 0
+            trace('arduino_handler empty read count: %d', empty_read_count)
+            if empty_read_count > MAX_EMPTY_READS:
+                empty_read_count = 0
+                raise Exception("arduino_handler: serial_connection.readline() broken")
             """
             Since errors are sent first, the readline may have gotten an
             Arduino error message and not sensor data.  Therefore the flush
@@ -421,6 +440,10 @@ if __name__ == '__main__':
         except serial.serialutil.SerialTimeoutException as e2:
             # Exception that is raised on write timeouts
             rospy.logwarn(e2)
+            serial_connection = connect_serial()
+        except Exception as e3:
+            # Exception triggered by too many consecutive empty reads
+            rospy.logwarn(e3)
             serial_connection = connect_serial()
 
         pairs_or_error = process_message(buf)
@@ -443,5 +466,5 @@ if __name__ == '__main__':
         serial_rate.sleep()
         # end of while loop
 
-    serial_connection.close()
+    close_serial()
     # end of main

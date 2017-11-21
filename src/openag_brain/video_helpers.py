@@ -12,7 +12,7 @@ def convert_video(in_path, out_path):
     writes it to `out_path`
     """
     if subprocess.call([
-        "ffmpeg", "-y", "-i", in_path, out_path
+        "avconv", "-y", "-i", in_path, out_path
     ]):
         raise RuntimeError(
             'Failed to convert file "{}" to "{}"'.format(in_path, out_path)
@@ -23,7 +23,7 @@ def get_video_duration(path):
     Returns the duration of the video file at `path` in seconds
     """
     res = subprocess.check_output([
-        "ffprobe", "-i", path, "-show_entries", "format=duration"
+        "avprobe", "-i", path, "-show_entries", "format=duration"
     ])
 
     # The output of ffprobe with the parameters should be as follows:
@@ -43,7 +43,7 @@ def create_video_from_image(image_path, video_path, duration):
     image at `image_path` and stores the result at `video_path`
     """
     if subprocess.call([
-        "ffmpeg", "-y", "-loop", "1", "-i", image_path, "-t",
+        "avconv", "-y", "-loop", "1", "-i", image_path, "-t",
         str(duration), "-pix_fmt", "yuv420p", video_path
     ]):
         raise RuntimeError("Failed to generate video from image")

@@ -1,4 +1,4 @@
 #!/bin/bash
 # This script generates a .rosinstall file for our source dependencies.
 # The .rosinstall file should be kept under version control.
-rosinstall_generator ros_comm rosserial rosserial_arduino usb_cam cv_bridge image_transport image_view --rosdistro indigo --deps --wet-only --exclude roslisp --tar > ~/catkin_ws/src/openag_brain/openag_brain_ros_indigo_deps_wet.rosinstall
+rosinstall_generator ros_comm rosserial rosserial_arduino usb_cam cv_bridge image_transport image_view rospy_message_converter --rosdistro indigo --deps --wet-only --exclude roslisp --tar > ~/catkin_ws/src/openag_brain/openag_brain_ros_indigo_deps_wet.rosinstall

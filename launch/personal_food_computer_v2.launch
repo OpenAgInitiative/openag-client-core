@@ -59,14 +59,13 @@
       <param name="min_update_interval" value="5" type="int"/>
     </node>
 
-    <!-- only works if nginx and openag_ui are installed
+    <!-- only works if nginx and openag_ui are installed -->
     <node pkg="image_view" type="image_saver" name="aerial_saver">
       <remap from="image" to="aerial_image/image_raw" />
       <param name="filename_format" value="/var/www/html/img.jpg" type="string" />
     </node>
-    -->
 
-    <node pkg="usb_cam" type="usb_cam_node" name="aerial_image">
+    <node pkg="usb_cam" type="usb_cam_node" name="aerial_image" respawn="true" respawn_delay="30">
       <rosparam file="$(find openag_brain)/launch/usb_cam.yaml" />
     </node>
     <node pkg="openag_brain" type="arduino_handler.py" name="arduino_handler">

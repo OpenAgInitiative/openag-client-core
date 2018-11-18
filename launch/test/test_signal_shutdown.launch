@@ -1,0 +1,6 @@
+<launch>
+  <group ns="tests">
+    <node pkg="openag_brain" type="signal_shutdown.py" name="signal_shutdown" />
+    <test pkg="openag_brain" test-name="test_signal_shutdown" type="test_signal_shutdown.py" />
+  </group>
+</launch>

@@ -1,8 +1,8 @@
 <launch>
   <arg name="environment_1" value="environments/environment_1" />
-
   <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_v2.yaml" />
   <rosparam command="load" file="$(find openag_brain)/launch/personal_food_computer_var_types.yaml" ns="var_types"/>
+  <node pkg="openag_brain" type="signal_shutdown.py" name="signal_shutdown" />
   <group ns="$(arg environment_1)">
     <node pkg="openag_brain" type="linear_controller.py" name="water_level_high_controller_1">
       <param name="variable" value="water_level_high" type="str"/>

@@ -4,4 +4,5 @@
 set -e
 
 ~/catkin_ws/src/openag_brain/scripts/install_db || exit 1
+~/catkin_ws/src/openag_brain/scripts/install_nginx || exit 1
 ~/catkin_ws/src/openag_brain/scripts/install_dev || exit 1
